@@ -4,6 +4,18 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <style>
+      /* Critical, minimal above-the-fold styles for Hero layout */
+      .hero { padding: 64px 0 32px; }
+      .hero-container { max-width: 1200px; margin: 0 auto; padding: 0 16px; display: grid; gap: 32px; grid-template-columns: 1fr; }
+      @media (min-width: 960px) { .hero-container { grid-template-columns: 3fr 2fr; align-items: center; } }
+      .hero-title { font-size: 2rem; line-height: 1.2; }
+      .hero-subtitle { margin-top: 12px; color: #444; }
+      .hero-buttons { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 16px; }
+      .hero-btn-primary, .hero-btn-secondary { display: inline-flex; align-items: center; justify-content: center; padding: 10px 16px; border-radius: 8px; }
+      .hero-btn-primary { background: #111; color: #fff; }
+      .hero-btn-secondary { background: #f3f3f3; color: #111; }
+    </style>
     <title>1Now - Increase Your Profits with Private Rentals</title>
   </head>
   <body>

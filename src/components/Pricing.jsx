@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import './Pricing.css';
 
 const Pricing = () => {
@@ -133,5 +134,5 @@ const Pricing = () => {
   );
 };
 
-export default Pricing;
+export default memo(Pricing);
 

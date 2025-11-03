@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import './Testimonials.css';
 
 const Testimonials = () => {
@@ -92,5 +93,5 @@ const Testimonials = () => {
   );
 };
 
-export default Testimonials;
+export default memo(Testimonials);
 

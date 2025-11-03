@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { memo, useState } from 'react';
 import './FAQ.css';
 
 const FAQ = () => {
@@ -64,5 +64,5 @@ const FAQ = () => {
   );
 };
 
-export default FAQ;
+export default memo(FAQ);
 
