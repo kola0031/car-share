@@ -1,14 +1,18 @@
 import { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import './Navbar.css';
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const { isAuthenticated, user, logout } = useAuth();
+  const navigate = useNavigate();
 
   return (
     <nav className="navbar">
       <div className="navbar-container">
         <div className="navbar-logo">
-          <span className="logo-text">1Now</span>
+          <span className="logo-text">HostPilot</span>
         </div>
         
         <div className={`navbar-menu ${isMenuOpen ? 'active' : ''}`}>
@@ -39,17 +43,17 @@ const Navbar = () => {
             Pricing
           </a>
           <a 
-            href="#footer"
+            href="#faq"
             onClick={(e) => {
               e.preventDefault();
-              const footer = document.querySelector('footer');
-              if (footer) {
-                footer.scrollIntoView({ behavior: 'smooth' });
+              const faq = document.querySelector('#faq');
+              if (faq) {
+                faq.scrollIntoView({ behavior: 'smooth' });
               }
               setIsMenuOpen(false);
             }}
           >
-            Make More Money™
+            How It Works
           </a>
           <a 
             href="#footer"
@@ -61,17 +65,37 @@ const Navbar = () => {
           >
             Blogs
           </a>
-          <a 
-            href="#footer" 
-            className="login-link"
-            onClick={(e) => {
-              e.preventDefault();
-              alert('Login functionality coming soon!');
-              setIsMenuOpen(false);
-            }}
-          >
-            Login
-          </a>
+          {isAuthenticated ? (
+            <>
+              <Link 
+                to="/dashboard" 
+                className="login-link"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                Dashboard
+              </Link>
+              <a 
+                href="#" 
+                className="login-link"
+                onClick={(e) => {
+                  e.preventDefault();
+                  logout();
+                  navigate('/');
+                  setIsMenuOpen(false);
+                }}
+              >
+                Logout
+              </a>
+            </>
+          ) : (
+            <Link 
+              to="/login" 
+              className="login-link"
+              onClick={() => setIsMenuOpen(false)}
+            >
+              Login
+            </Link>
+          )}
           <a 
             href="#footer" 
             className="cta-button"
@@ -84,7 +108,7 @@ const Navbar = () => {
               setIsMenuOpen(false);
             }}
           >
-            BOOK A FREE PROFIT DEMO CALL
+            GET STARTED
           </a>
           <a 
             href="#footer" 
@@ -98,7 +122,7 @@ const Navbar = () => {
               setIsMenuOpen(false);
             }}
           >
-            START FOR FREE
+            SCHEDULE A CALL
           </a>
         </div>
 
@@ -114,7 +138,7 @@ const Navbar = () => {
       </div>
       
       <div className="top-banner">
-        Limited time offer: Free custom website
+        Atlanta's leading tech-driven vehicle management platform
       </div>
     </nav>
   );

@@ -1,22 +1,43 @@
 .navbar {
   position: sticky;
   top: 0;
-  background: white;
+  background: rgba(15, 23, 42, 0.8);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border-color);
   z-index: 1000;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-md);
 }
 
 .top-banner {
-  background: #1a1a1a;
+  background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
   color: white;
   text-align: center;
   padding: 10px;
   font-size: 14px;
   font-weight: 500;
+  position: relative;
+  overflow: hidden;
+}
+
+.top-banner::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  animation: shimmer 3s infinite;
+}
+
+@keyframes shimmer {
+  0% { left: -100%; }
+  100% { left: 100%; }
 }
 
 .navbar-container {
-  max-width: 1200px;
+  max-width: 1400px;
   margin: 0 auto;
   padding: 1rem 2rem;
   display: flex;
@@ -26,8 +47,12 @@
 
 .navbar-logo .logo-text {
   font-size: 24px;
-  font-weight: bold;
-  color: #1a1a1a;
+  font-weight: 700;
+  background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  letter-spacing: -0.5px;
 }
 
 .navbar-menu {
@@ -38,13 +63,31 @@
 
 .navbar-menu a {
   text-decoration: none;
-  color: #333;
+  color: var(--text-secondary);
   font-weight: 500;
-  transition: color 0.3s;
+  font-size: 15px;
+  transition: all 0.3s ease;
+  position: relative;
+  padding: 0.5rem 0;
+}
+
+.navbar-menu a::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background: var(--primary);
+  transition: width 0.3s ease;
 }
 
 .navbar-menu a:hover {
-  color: #007bff;
+  color: var(--text-primary);
+}
+
+.navbar-menu a:hover::after {
+  width: 100%;
 }
 
 .login-link {
@@ -52,29 +95,40 @@
 }
 
 .cta-button {
-  background: #007bff;
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
   color: white !important;
-  padding: 0.6rem 1.2rem;
-  border-radius: 5px;
+  padding: 0.7rem 1.5rem;
+  border-radius: 8px;
   font-size: 0.9rem;
   white-space: nowrap;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  box-shadow: var(--shadow-md);
+  border: none;
 }
 
 .cta-button:hover {
-  background: #0056b3;
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-glow);
 }
 
 .cta-button-secondary {
-  background: #28a745;
-  color: white !important;
-  padding: 0.6rem 1.2rem;
-  border-radius: 5px;
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--text-primary) !important;
+  padding: 0.7rem 1.5rem;
+  border-radius: 8px;
   font-size: 0.9rem;
   white-space: nowrap;
+  font-weight: 600;
+  border: 1px solid var(--border-color);
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
 }
 
 .cta-button-secondary:hover {
-  background: #218838;
+  background: rgba(255, 255, 255, 0.15);
+  border-color: var(--primary);
+  transform: translateY(-2px);
 }
 
 .navbar-toggle {
@@ -89,9 +143,10 @@
 .navbar-toggle span {
   width: 25px;
   height: 3px;
-  background: #333;
+  background: var(--text-primary);
   margin: 3px 0;
   transition: 0.3s;
+  border-radius: 2px;
 }
 
 @media (max-width: 768px) {
@@ -104,15 +159,18 @@
     top: 100%;
     left: 0;
     right: 0;
-    background: white;
+    background: rgba(15, 23, 42, 0.95);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
     flex-direction: column;
-    padding: 1rem;
+    padding: 2rem;
     gap: 1rem;
-    box-shadow: 0 5px 10px rgba(0, 0, 0, 0.1);
+    box-shadow: var(--shadow-xl);
+    border-top: 1px solid var(--border-color);
     transform: translateY(-100%);
     opacity: 0;
     visibility: hidden;
-    transition: all 0.3s;
+    transition: all 0.3s ease;
   }
 
   .navbar-menu.active {

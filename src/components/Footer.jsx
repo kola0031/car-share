@@ -5,35 +5,35 @@ const Footer = () => {
     <footer id="footer" className="footer">
       <div className="footer-container">
         <div className="footer-cta">
-          <h2 className="footer-cta-title">Ready to make more MONEY™?</h2>
+          <h2 className="footer-cta-title">Ready to earn passive income from your fleet?</h2>
           <div className="footer-cta-buttons">
             <a 
               href="#footer" 
               className="footer-btn-primary"
               onClick={(e) => {
                 e.preventDefault();
-                alert('Thank you! You can sign up for 1Now by contacting us or visiting our sign-up page.');
+                alert('Thank you! We\'ll contact you shortly to get started with HostPilot.');
               }}
             >
-              START FOR FREE
+              GET STARTED TODAY
             </a>
             <a 
               href="#footer" 
               className="footer-btn-secondary"
               onClick={(e) => {
                 e.preventDefault();
-                alert('Thank you for your interest! Please contact us to schedule a free profit demo call.');
+                alert('Thank you for your interest! Please contact us to schedule a consultation call.');
               }}
             >
-              BOOK A FREE PROFIT DEMO CALL
+              SCHEDULE A CALL
             </a>
           </div>
         </div>
 
         <div className="footer-content">
           <div className="footer-address">
-            <p>309 5th Avenue</p>
-            <p>New York, NY 10016</p>
+            <p>Atlanta, Georgia</p>
+            <p>United States</p>
             <div className="footer-social">
               <a href="#" aria-label="Facebook">📘</a>
               <a href="#" aria-label="Twitter">🐦</a>
@@ -43,22 +43,22 @@ const Footer = () => {
 
           <div className="footer-links">
             <div className="footer-column">
-              <h4>Product</h4>
+              <h4>Platform</h4>
               <ul>
                 <li><a href="#features">Features</a></li>
-                <li><a href="#website">Free Custom Website</a></li>
                 <li><a href="#pricing">Pricing</a></li>
-                <li><a href="#demo">Video Demo</a></li>
+                <li><a href="#faq">How It Works</a></li>
+                <li><a href="#testimonials">Testimonials</a></li>
               </ul>
             </div>
 
             <div className="footer-column">
-              <h4>Product</h4>
+              <h4>Services</h4>
               <ul>
-                <li><a href="#make-more-money">Make More Money™</a></li>
-                <li><a href="#demo">Book a Free Profit Demo Call</a></li>
-                <li><a href="#start">Start for Free</a></li>
-                <li><a href="#support">Support / Need Help?</a></li>
+                <li><a href="#features">Fleet Management</a></li>
+                <li><a href="#features">PackMyShare Integration</a></li>
+                <li><a href="#features">VEVS Portal</a></li>
+                <li><a href="#support">Support</a></li>
               </ul>
             </div>
 
@@ -74,7 +74,7 @@ const Footer = () => {
           </div>
 
           <div className="footer-newsletter">
-            <h4>Sign Up for Our Newsletter, Get Tricks to Earn More Money</h4>
+            <h4>Stay Updated: Get Fleet Management Tips & Updates</h4>
             <form className="newsletter-form">
               <input 
                 type="email" 
@@ -88,7 +88,7 @@ const Footer = () => {
         </div>
 
         <div className="footer-bottom">
-          <p>1Now helps Turo Hosts go direct and Make More Money. 1Now is not affiliated with Turo.</p>
+          <p>HostPilot is Atlanta's leading tech-driven vehicle management platform. We help hosts earn passive income through full-service fleet management. HostPilot partners with VEVS, PackMyShare, and leading booking platforms.</p>
         </div>
       </div>
     </footer>

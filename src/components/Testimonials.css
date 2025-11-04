@@ -1,233 +1,364 @@
 .testimonials {
-  padding: 5rem 2rem;
-  background: #f8f9fa;
+  padding: 8rem 2rem;
+  background: transparent;
 }
 
 .testimonials-container {
-  max-width: 1200px;
+  max-width: 1400px;
   margin: 0 auto;
 }
 
 .success-story {
   text-align: center;
-  padding: 3rem;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 4rem 3rem;
+  background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 50%, var(--accent) 100%);
   color: white;
-  border-radius: 15px;
-  margin-bottom: 3rem;
+  border-radius: 24px;
+  margin-bottom: 4rem;
+  position: relative;
+  overflow: hidden;
+  box-shadow: var(--shadow-xl);
+}
+
+.success-story::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -20%;
+  width: 500px;
+  height: 500px;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+  border-radius: 50%;
 }
 
 .success-subtitle {
   font-size: 1.2rem;
   margin-bottom: 1rem;
-  opacity: 0.9;
+  opacity: 0.95;
+  position: relative;
+  z-index: 1;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-weight: 600;
 }
 
 .success-title {
-  font-size: 3rem;
-  font-weight: bold;
+  font-size: clamp(2.5rem, 5vw, 4rem);
+  font-weight: 800;
   margin-bottom: 1rem;
+  position: relative;
+  z-index: 1;
+  line-height: 1.1;
 }
 
 .success-period {
   font-size: 1.5rem;
   font-weight: 600;
-  opacity: 0.9;
+  opacity: 0.95;
+  position: relative;
+  z-index: 1;
+  text-transform: uppercase;
+  letter-spacing: 1px;
 }
 
 .profit-section {
   text-align: center;
-  padding: 3rem 0;
-  margin-bottom: 3rem;
+  padding: 4rem 0;
+  margin-bottom: 4rem;
 }
 
 .profit-title {
-  font-size: 2.5rem;
-  color: #1a1a1a;
+  font-size: clamp(2rem, 4vw, 2.8rem);
+  color: var(--text-primary);
   margin-bottom: 1.5rem;
-  font-weight: 700;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  line-height: 1.2;
 }
 
 .profit-description {
   font-size: 1.2rem;
-  color: #666;
-  max-width: 800px;
+  color: var(--text-secondary);
+  max-width: 900px;
   margin: 0 auto;
   line-height: 1.8;
 }
 
 .protection-section {
-  background: white;
-  padding: 3rem;
-  border-radius: 15px;
+  background: var(--bg-card);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  padding: 4rem 3rem;
+  border-radius: 24px;
   text-align: center;
-  margin-bottom: 3rem;
-  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+  margin-bottom: 4rem;
+  box-shadow: var(--shadow-lg);
+  border: 1px solid var(--border-color);
+  position: relative;
+}
+
+.protection-section::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, var(--primary), var(--secondary), var(--accent));
+  border-radius: 24px 24px 0 0;
 }
 
 .protection-title {
-  font-size: 2rem;
-  color: #1a1a1a;
-  margin-bottom: 1rem;
-  font-weight: 700;
+  font-size: clamp(1.8rem, 3vw, 2.5rem);
+  color: var(--text-primary);
+  margin-bottom: 1.5rem;
+  font-weight: 800;
+  letter-spacing: -0.5px;
 }
 
 .protection-description {
   font-size: 1.1rem;
-  color: #666;
+  color: var(--text-secondary);
   line-height: 1.8;
+  max-width: 800px;
+  margin: 0 auto;
 }
 
 .money-section {
   text-align: center;
-  padding: 3rem 0;
-  margin-bottom: 3rem;
+  padding: 4rem 0;
+  margin-bottom: 4rem;
 }
 
 .money-title {
-  font-size: 2.5rem;
-  color: #1a1a1a;
-  font-weight: 700;
+  font-size: clamp(2rem, 4vw, 2.8rem);
+  color: var(--text-primary);
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  line-height: 1.2;
 }
 
 .calculation-section {
-  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 50%, var(--accent) 100%);
   color: white;
-  padding: 4rem 2rem;
-  border-radius: 15px;
+  padding: 5rem 3rem;
+  border-radius: 24px;
   text-align: center;
-  margin-bottom: 3rem;
+  margin-bottom: 4rem;
+  position: relative;
+  overflow: hidden;
+  box-shadow: var(--shadow-xl);
+}
+
+.calculation-section::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -20%;
+  width: 500px;
+  height: 500px;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+  border-radius: 50%;
 }
 
 .calculation-subtitle {
   font-size: 1.3rem;
   margin-bottom: 1rem;
   opacity: 0.95;
+  position: relative;
+  z-index: 1;
+  font-weight: 600;
 }
 
 .calculation-amount {
-  font-size: 4rem;
-  font-weight: bold;
+  font-size: clamp(3rem, 6vw, 5rem);
+  font-weight: 800;
   margin-bottom: 1rem;
+  position: relative;
+  z-index: 1;
+  line-height: 1;
 }
 
 .calculation-note {
   font-size: 1.3rem;
   margin-bottom: 1rem;
   opacity: 0.95;
+  position: relative;
+  z-index: 1;
+  font-weight: 500;
 }
 
 .calculation-formula {
-  font-size: 0.9rem;
+  font-size: 1rem;
   opacity: 0.85;
   font-style: italic;
+  position: relative;
+  z-index: 1;
 }
 
 .hosts-section {
   text-align: center;
-  padding: 3rem 0;
-  margin-bottom: 3rem;
+  padding: 4rem 0;
+  margin-bottom: 4rem;
 }
 
 .hosts-title {
-  font-size: 2.5rem;
-  color: #1a1a1a;
-  font-weight: 700;
+  font-size: clamp(2rem, 4vw, 2.8rem);
+  color: var(--text-primary);
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  line-height: 1.2;
 }
 
 .boost-section {
-  background: white;
-  padding: 3rem;
-  border-radius: 15px;
+  background: var(--bg-card);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  padding: 4rem 3rem;
+  border-radius: 24px;
   text-align: center;
-  margin-bottom: 4rem;
-  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+  margin-bottom: 5rem;
+  box-shadow: var(--shadow-lg);
+  border: 1px solid var(--border-color);
+  position: relative;
+}
+
+.boost-section::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, var(--primary), var(--secondary), var(--accent));
+  border-radius: 24px 24px 0 0;
 }
 
 .boost-subtitle {
   font-size: 1.2rem;
-  color: #666;
+  color: var(--text-muted);
   margin-bottom: 1rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-weight: 600;
 }
 
 .boost-title {
-  font-size: 3rem;
-  color: #28a745;
-  font-weight: bold;
+  font-size: clamp(2.5rem, 5vw, 3.5rem);
+  background: linear-gradient(135deg, var(--accent) 0%, var(--primary) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  font-weight: 800;
   margin-bottom: 1.5rem;
+  letter-spacing: -1px;
 }
 
 .boost-description {
   font-size: 1.1rem;
-  color: #666;
+  color: var(--text-secondary);
   line-height: 1.8;
+  max-width: 800px;
+  margin: 0 auto;
 }
 
 .section-header {
   text-align: center;
-  margin-bottom: 3rem;
+  margin-bottom: 4rem;
 }
 
 .section-title {
-  font-size: 2.5rem;
-  color: #1a1a1a;
+  font-size: clamp(2.5rem, 5vw, 3.5rem);
+  color: var(--text-primary);
   margin-bottom: 0.5rem;
-  font-weight: 700;
+  font-weight: 800;
+  letter-spacing: -1px;
 }
 
 .section-subtitle {
   font-size: 1.8rem;
-  color: #666;
+  color: var(--text-secondary);
+  font-weight: 500;
 }
 
 .testimonials-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
   gap: 2rem;
 }
 
 .testimonial-card {
-  background: white;
-  padding: 2rem;
-  border-radius: 10px;
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-  transition: all 0.3s;
+  background: var(--bg-card);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  padding: 2.5rem;
+  border-radius: 20px;
+  box-shadow: var(--shadow-md);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 1px solid var(--border-color);
+  position: relative;
+}
+
+.testimonial-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--primary), var(--secondary), var(--accent));
+  border-radius: 20px 20px 0 0;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.testimonial-card:hover::before {
+  opacity: 1;
 }
 
 .testimonial-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+  transform: translateY(-8px);
+  box-shadow: var(--shadow-xl);
+  border-color: var(--primary);
+  background: rgba(30, 41, 59, 0.95);
 }
 
 .testimonial-quote {
-  font-size: 1.1rem;
+  font-size: 1.15rem;
   line-height: 1.8;
-  color: #333;
+  color: var(--text-secondary);
   margin-bottom: 1.5rem;
   font-style: italic;
 }
 
 .testimonial-author {
-  font-weight: bold;
-  color: #007bff;
+  font-weight: 700;
+  color: var(--primary);
   font-size: 1rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 @media (max-width: 768px) {
-  .success-title {
-    font-size: 2rem;
+  .testimonials {
+    padding: 5rem 2rem;
   }
 
-  .calculation-amount {
-    font-size: 3rem;
+  .success-story,
+  .calculation-section {
+    padding: 3rem 2rem;
   }
 
-  .boost-title {
-    font-size: 2rem;
+  .protection-section,
+  .boost-section {
+    padding: 3rem 2rem;
   }
 
   .testimonials-grid {
     grid-template-columns: 1fr;
   }
-}
 
+  .testimonial-card {
+    padding: 2rem;
+  }
+}

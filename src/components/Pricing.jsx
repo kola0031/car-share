@@ -22,49 +22,52 @@ const Pricing = () => {
   };
   const plans = [
     {
-      name: 'Starter',
+      name: 'HostPilot Subscription',
       price: '$150',
       period: '/month',
-      cars: 'Up to 10 cars',
+      cars: 'Per host',
       features: [
-        'Custom website',
-        'Fleet management software',
-        'Automated ID verification',
-        'Automated insurance verification',
-        'Damage & liability insurance',
-        'And much more'
+        'VEVS system access & host portal',
+        'PackMyShare parking ($97.85/car/month included)',
+        'Full booking management',
+        'Customer service & support',
+        'Revenue distribution & tracking',
+        'Maintenance coordination',
+        'Multi-platform listing management'
       ],
-      cta: 'START FOR FREE',
-      popular: false
-    },
-    {
-      name: 'Professional',
-      price: '$260',
-      period: '/month',
-      cars: 'UP TO 25 cars',
-      features: [
-        'Everything in starter',
-        'Unlimited locations',
-        'Analytics for Turo & direct rentals',
-        'Expense management',
-        'All integrations',
-        '24/7 support'
-      ],
-      cta: 'START FOR FREE',
+      cta: 'GET STARTED',
       popular: true
     },
     {
-      name: 'Enterprise',
-      price: 'Book a call',
-      period: '',
-      cars: 'Unlimited cars',
+      name: 'One-Time Setup',
+      price: '€580',
+      period: 'one-time',
+      cars: 'Integration fee',
       features: [
-        'Everything in professional',
-        'Mobile application',
-        'Available on the App Store and Google Play Store',
-        'Customized according to your business'
+        'System setup & onboarding',
+        'VEVS portal configuration',
+        'PackMyShare facility setup',
+        'Account integration',
+        'Initial vehicle listing',
+        'Training & documentation'
       ],
-      cta: 'PROFIT DEMO CALL',
+      cta: 'LEARN MORE',
+      popular: false
+    },
+    {
+      name: 'Optional Add-ons',
+      price: 'Custom',
+      period: 'pricing',
+      cars: 'As needed',
+      features: [
+        'Maintenance services',
+        'Cleaning services',
+        'Additional storage',
+        'Premium support tiers',
+        'Custom integrations',
+        'Expandable fleet options'
+      ],
+      cta: 'CONTACT US',
       popular: false,
       custom: true
     }
@@ -74,16 +77,16 @@ const Pricing = () => {
     <section id="pricing" className="pricing">
       <div className="pricing-container">
         <div className="limited-offer">
-          <h2 className="offer-title">Limited Time Offer!</h2>
-          <h3 className="offer-subtitle">Free custom website</h3>
+          <h2 className="offer-title">Complete Fleet Management Solution</h2>
+          <h3 className="offer-subtitle">Everything included in one subscription</h3>
           <p className="offer-description">
-            Get a free, mobile friendly website with 1Now. Launch in 1 day and boost profit by 75% - earn an extra $18,000 per year.
+            Get full-service management with HostPilot. VEVS portal access, PackMyShare parking, booking management, customer service, and revenue distribution — all included.
           </p>
           <ul className="offer-features">
-            <li>Sync with your Turo calendar</li>
-            <li>Manage your fleet in one dashboard</li>
-            <li>Stripe & Square integration</li>
-            <li>SEO-optimized to attract more renters</li>
+            <li>VEVS-powered host portal</li>
+            <li>PackMyShare parking ($97.85/car/month included)</li>
+            <li>Multi-platform booking management</li>
+            <li>24/7 customer service & support</li>
           </ul>
           <a 
             href="#footer" 
@@ -96,12 +99,13 @@ const Pricing = () => {
               }
             }}
           >
-            START FOR FREE
+            GET STARTED
           </a>
         </div>
 
         <div className="pricing-header">
-          <h2 className="pricing-title">Transparent & simple pricing</h2>
+          <h2 className="pricing-title">Simple, Transparent Pricing</h2>
+          <p className="pricing-subtitle">All-inclusive subscription with no hidden fees</p>
         </div>
 
         <div className="pricing-grid">

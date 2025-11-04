@@ -6,10 +6,10 @@ const Hero = () => {
       <div className="hero-container">
         <div className="hero-content">
           <h1 className="hero-title">
-            <strong>Turo hosts and car rental operators: INCREASE YOUR profits with private rentals</strong>
+            <strong>Full-Service Fleet Management: Turn Your Vehicles Into Passive Income</strong>
           </h1>
           <p className="hero-subtitle">
-            Combine the power of Turo with your own private rental platform. Launch a free website and <strong>keep 100% of your revenue.</strong> Get started in just one day!
+            HostPilot manages everything for you — listings, bookings, maintenance, and guest support — while you earn passive income from your fleet. <strong>Hands-free vehicle income.</strong> Get started in Atlanta today!
           </p>
           <div className="hero-buttons">
             <a 
@@ -23,7 +23,7 @@ const Hero = () => {
                 }
               }}
             >
-              MAKE MORE MONEY™
+              GET STARTED TODAY
             </a>
             <a 
               href="#footer" 
@@ -36,30 +36,30 @@ const Hero = () => {
                 }
               }}
             >
-              BOOK A FREE PROFIT DEMO CALL
+              SCHEDULE A CALL
             </a>
             <a 
-              href="#footer" 
+              href="#pricing" 
               className="hero-btn-secondary"
               onClick={(e) => {
                 e.preventDefault();
-                const footer = document.querySelector('footer');
-                if (footer) {
-                  footer.scrollIntoView({ behavior: 'smooth' });
+                const pricing = document.querySelector('#pricing');
+                if (pricing) {
+                  pricing.scrollIntoView({ behavior: 'smooth' });
                 }
               }}
             >
-              START FOR FREE
+              VIEW PRICING
             </a>
           </div>
         </div>
         
         <div className="hero-stats">
           <div className="stats-item">
-            <h2>We are a New York-based company helping</h2>
-            <div className="stat-number">125+</div>
-            <h3>Turo hosts</h3>
-            <div className="stat-highlight">MAKE MORE MONEY™</div>
+            <h2>Atlanta's leading platform for</h2>
+            <div className="stat-number">100+</div>
+            <h3>Vehicle Hosts</h3>
+            <div className="stat-highlight">PASSIVE INCOME</div>
           </div>
         </div>
       </div>
