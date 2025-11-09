@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import './Footer.css';
 
 const Footer = () => {
@@ -7,16 +8,12 @@ const Footer = () => {
         <div className="footer-cta">
           <h2 className="footer-cta-title">Ready to earn passive income from your fleet?</h2>
           <div className="footer-cta-buttons">
-            <a 
-              href="#footer" 
+            <Link 
+              to="/register" 
               className="footer-btn-primary"
-              onClick={(e) => {
-                e.preventDefault();
-                alert('Thank you! We\'ll contact you shortly to get started with HostPilot.');
-              }}
             >
               GET STARTED TODAY
-            </a>
+            </Link>
             <a 
               href="#footer" 
               className="footer-btn-secondary"
