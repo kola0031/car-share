@@ -3,25 +3,25 @@ import './Features.css';
 
 const Features = () => {
   const features = [
-    { title: 'Online bookings', description: 'Get a free website with a seamless reservation engine', icon: '📱' },
-    { title: 'Damage & liability insurance', description: 'Make your trips secure with the option to purchase insurance', icon: '🛡️' },
-    { title: 'Identity verification', description: 'Secure rentals with robust ID verification', icon: '✅' },
-    { title: 'Insurance verification', description: 'Verify whether the renter has right insurance', icon: '🔍' },
-    { title: 'Rental agreements', description: 'Automated rental agreements synced with bookings', icon: '📄' },
-    { title: 'Seamless payments', description: 'Effortlessly manage online payments & security deposits', icon: '💳' },
-    { title: 'Turo sync', description: 'Sync your Turo calendar and reservation data', icon: '🔄' },
-    { title: 'Expense management', description: 'Add expenses, sync with revenue, and view profit', icon: '📊' },
-    { title: 'Fleet metrics', description: 'Understand your car rental business in-depth', icon: '📈' },
-    { title: 'And much more', description: 'Manual Bookings, Customer Management, Fleet Management, Coupons, etc…', icon: '✨' },
+    { title: 'VEVS Host Portal', description: 'Access your fleet anytime with VEVS-powered virtual listings and real-time management', icon: '💻' },
+    { title: 'Full Booking Management', description: 'HostPilot handles all guest bookings via Turo, Booking.com, and direct channels', icon: '📅' },
+    { title: 'PackMyShare Integration', description: 'Secure vehicle parking and pickup/drop-off logistics at premium Atlanta facilities', icon: '🅿️' },
+    { title: 'Customer Service', description: '24/7 guest support handled by HostPilot team — you stay hands-free', icon: '🎧' },
+    { title: 'Revenue Distribution', description: 'Transparent revenue sharing with real-time tracking and payouts', icon: '💰' },
+    { title: 'Maintenance Coordination', description: 'Scheduled maintenance and inspections via partner auto shops', icon: '🔧' },
+    { title: 'Cleaning Services', description: 'Professional cleaning services available through partner network', icon: '✨' },
+    { title: 'Marketing & Listings', description: 'Multi-platform listing management and optimization to maximize bookings', icon: '📢' },
+    { title: 'Fleet Analytics', description: 'Track performance, revenue, and optimize your fleet operations', icon: '📊' },
+    { title: 'Automated Operations', description: 'AI-powered fleet optimization and automation tools for maximum efficiency', icon: '🤖' },
   ];
 
   return (
     <section id="features" className="features">
       <div className="features-container">
         <div className="section-header">
-          <h2 className="section-title">1Now Software</h2>
-          <h3 className="section-subtitle">Everything your car rental business needs to</h3>
-          <h3 className="section-subtitle highlight">increase profits</h3>
+          <h2 className="section-title">HostPilot Platform</h2>
+          <h3 className="section-subtitle">Everything you need for</h3>
+          <h3 className="section-subtitle highlight">hands-free vehicle income</h3>
         </div>
 
         <div className="features-grid">
@@ -35,16 +35,16 @@ const Features = () => {
         </div>
 
         <div className="best-software">
-          <h2 className="best-title">The Best Car Rental Software for Turo Hosts</h2>
+          <h2 className="best-title">Atlanta's Leading Tech-Driven Vehicle Management Platform</h2>
           <p className="best-description">
-            Manage your fleet, bookings & payments with 1Now. Earn up to $18,000 per year by skipping Turo's 25% fee.
+            HostPilot manages all operations — from listings to logistics — so you can focus on earning passive income. We handle everything while you own the assets.
           </p>
           <ul className="best-features-list">
-            <li>Real-time fleet tracking</li>
-            <li>Automated bookings & payments</li>
-            <li>Expense tracking + profit insights</li>
-            <li>Stripe & Square integration</li>
-            <li>Analytics to grow your business</li>
+            <li>Full-service fleet management</li>
+            <li>Multi-platform booking management</li>
+            <li>Secure storage & logistics via PackMyShare</li>
+            <li>Transparent revenue sharing</li>
+            <li>AI-powered optimization tools</li>
           </ul>
         </div>
       </div>
