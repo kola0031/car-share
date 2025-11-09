@@ -35,6 +35,17 @@ const request = async (endpoint, options = {}) => {
     }
 
     if (!response.ok) {
+      // Handle 401/403 errors by clearing invalid token
+      if (response.status === 401 || response.status === 403) {
+        const token = getToken();
+        if (token) {
+          localStorage.removeItem('token');
+          // Redirect to login if we're not already there
+          if (window.location.pathname !== '/login' && window.location.pathname !== '/register') {
+            window.location.href = '/login?expired=true';
+          }
+        }
+      }
       throw new Error(data.message || `Request failed: ${response.status}`);
     }
 

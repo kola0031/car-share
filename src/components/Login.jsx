@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import './Login.css';
 
 const Login = () => {
@@ -10,6 +10,14 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+
+  useEffect(() => {
+    // Check if redirected due to expired token
+    if (searchParams.get('expired') === 'true') {
+      setError('Your session has expired. Please log in again.');
+    }
+  }, [searchParams]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -19,7 +27,12 @@ const Login = () => {
     const result = await login(email, password);
     
     if (result.success) {
-      navigate('/dashboard');
+      // Redirect based on user role
+      if (result.user?.role === 'driver') {
+        navigate('/driver/trips');
+      } else {
+        navigate('/dashboard');
+      }
     } else {
       setError(result.error || 'Login failed');
     }
