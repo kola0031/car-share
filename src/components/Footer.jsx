@@ -57,7 +57,7 @@ const Footer = () => {
               <ul>
                 <li><a href="#features">Fleet Management</a></li>
                 <li><a href="#features">PackMyShare Integration</a></li>
-                <li><a href="#features">VEVS Portal</a></li>
+                <li><a href="#features">HostPilot Portal</a></li>
                 <li><a href="#support">Support</a></li>
               </ul>
             </div>
@@ -88,7 +88,7 @@ const Footer = () => {
         </div>
 
         <div className="footer-bottom">
-          <p>HostPilot is Atlanta's leading tech-driven vehicle management platform. We help hosts earn passive income through full-service fleet management. HostPilot partners with VEVS, PackMyShare, and leading booking platforms.</p>
+          <p>HostPilot is Atlanta's leading tech-driven vehicle management platform. We help hosts earn passive income through full-service fleet management. HostPilot partners with PackMyShare and leading booking platforms.</p>
         </div>
       </div>
     </footer>

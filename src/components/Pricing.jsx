@@ -27,7 +27,7 @@ const Pricing = () => {
       period: '/month',
       cars: 'Per host',
       features: [
-        'VEVS system access & host portal',
+        'HostPilot system access & host portal',
         'PackMyShare parking ($97.85/car/month included)',
         'Full booking management',
         'Customer service & support',
@@ -45,7 +45,7 @@ const Pricing = () => {
       cars: 'Integration fee',
       features: [
         'System setup & onboarding',
-        'VEVS portal configuration',
+        'HostPilot portal configuration',
         'PackMyShare facility setup',
         'Account integration',
         'Initial vehicle listing',
@@ -80,10 +80,10 @@ const Pricing = () => {
           <h2 className="offer-title">Complete Fleet Management Solution</h2>
           <h3 className="offer-subtitle">Everything included in one subscription</h3>
           <p className="offer-description">
-            Get full-service management with HostPilot. VEVS portal access, PackMyShare parking, booking management, customer service, and revenue distribution — all included.
+            Get full-service management with HostPilot. HostPilot portal access, PackMyShare parking, booking management, customer service, and revenue distribution — all included.
           </p>
           <ul className="offer-features">
-            <li>VEVS-powered host portal</li>
+            <li>HostPilot-powered host portal</li>
             <li>PackMyShare parking ($97.85/car/month included)</li>
             <li>Multi-platform booking management</li>
             <li>24/7 customer service & support</li>

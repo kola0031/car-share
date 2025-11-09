@@ -3,7 +3,7 @@ import './Features.css';
 
 const Features = () => {
   const features = [
-    { title: 'VEVS Host Portal', description: 'Access your fleet anytime with VEVS-powered virtual listings and real-time management', icon: '💻' },
+    { title: 'HostPilot Portal', description: 'Access your fleet anytime with HostPilot-powered virtual listings and real-time management', icon: '💻' },
     { title: 'Full Booking Management', description: 'HostPilot handles all guest bookings via Turo, Booking.com, and direct channels', icon: '📅' },
     { title: 'PackMyShare Integration', description: 'Secure vehicle parking and pickup/drop-off logistics at premium Atlanta facilities', icon: '🅿️' },
     { title: 'Customer Service', description: '24/7 guest support handled by HostPilot team — you stay hands-free', icon: '🎧' },

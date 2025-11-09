@@ -6,13 +6,13 @@ A modern React-based website for HostPilot - Atlanta's leading tech-driven vehic
 
 HostPilot is a complete fleet management platform that:
 - **Manages everything** - listings, bookings, maintenance, and guest support
-- **VEVS Integration** - hosts access virtual listings via VEVS-powered portals
+- **HostPilot Portal** - hosts access virtual listings via HostPilot-powered portal
 - **PackMyShare Partnership** - secure vehicle storage and pickup/drop-off logistics
 - **Multi-platform booking** - manages bookings across Turo, Booking.com, and direct channels
 - **Revenue sharing** - transparent revenue distribution between HostPilot and hosts
 
 ### Pricing
-- **Subscription**: $150/month per host (includes VEVS access + PackMyShare parking)
+- **Subscription**: $150/month per host (includes HostPilot portal access + PackMyShare parking)
 - **One-time Setup**: €580 (system setup + onboarding)
 - **Optional Add-ons**: Maintenance and cleaning services
 
@@ -22,7 +22,7 @@ HostPilot is a complete fleet management platform that:
 - **Modern UI** - Beautiful gradients, smooth animations, and intuitive navigation
 - **Interactive Components**:
   - Hero section with compelling CTAs
-  - Features showcase (VEVS portal, PackMyShare integration, booking management)
+  - Features showcase (HostPilot portal, PackMyShare integration, booking management)
   - Pricing tiers (Subscription, One-time Setup, Optional Add-ons)
   - Testimonials section
   - FAQ accordion

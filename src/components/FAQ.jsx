@@ -7,15 +7,15 @@ const FAQ = () => {
   const faqs = [
     {
       question: "What exactly is HostPilot and how does the full-service fleet management model work?",
-      answer: "HostPilot is a complete fleet management platform that handles all operations for vehicle hosts. You register, subscribe ($150/month), and list your vehicles on our VEVS-powered host portal. Your cars are parked at secure PackMyShare facilities in Atlanta. HostPilot manages all guest bookings (via Turo, Booking.com, and other platforms), provides 24/7 customer service, coordinates maintenance, and handles logistics. You maintain ownership of your vehicles while earning passive income — we do the work, you earn the revenue."
+      answer: "HostPilot is a complete fleet management platform that handles all operations for vehicle hosts. You register, subscribe ($150/month), and list your vehicles on our HostPilot-powered host portal. Your cars are parked at secure PackMyShare facilities in Atlanta. HostPilot manages all guest bookings (via Turo, Booking.com, and other platforms), provides 24/7 customer service, coordinates maintenance, and handles logistics. You maintain ownership of your vehicles while earning passive income — we do the work, you earn the revenue."
     },
     {
       question: "What's included in the $150/month subscription fee?",
-      answer: "The $150/month subscription includes VEVS system access and your host portal, PackMyShare parking ($97.85 per car per month is included), full booking management across multiple platforms, customer service and guest support, revenue distribution and tracking, maintenance coordination via partner auto shops, and multi-platform listing management. It's an all-inclusive service — you pay one monthly fee and we handle everything."
+      answer: "The $150/month subscription includes HostPilot system access and your host portal, PackMyShare parking ($97.85 per car per month is included), full booking management across multiple platforms, customer service and guest support, revenue distribution and tracking, maintenance coordination via partner auto shops, and multi-platform listing management. It's an all-inclusive service — you pay one monthly fee and we handle everything."
     },
     {
       question: "What is the one-time €580 integration fee for?",
-      answer: "The €580 one-time fee covers system setup and onboarding. This includes VEVS portal configuration, PackMyShare facility setup and integration, account setup and platform connections, initial vehicle listing setup, and comprehensive training and documentation. This ensures a smooth, professional onboarding experience so your fleet is ready to start earning immediately."
+      answer: "The €580 one-time fee covers system setup and onboarding. This includes HostPilot portal configuration, PackMyShare facility setup and integration, account setup and platform connections, initial vehicle listing setup, and comprehensive training and documentation. This ensures a smooth, professional onboarding experience so your fleet is ready to start earning immediately."
     },
     {
       question: "Where are my vehicles stored and how do guests pick them up?",
@@ -27,7 +27,7 @@ const FAQ = () => {
     },
     {
       question: "How does revenue sharing work?",
-      answer: "Revenue is shared transparently between HostPilot and you, the host. All bookings managed through HostPilot (whether via Turo, Booking.com, or direct channels) are tracked in real-time through your VEVS portal. You can see all revenue, bookings, and payouts in one dashboard. Revenue distribution is automated and transparent, so you always know where your money is coming from and when you'll receive it."
+      answer: "Revenue is shared transparently between HostPilot and you, the host. All bookings managed through HostPilot (whether via Turo, Booking.com, or direct channels) are tracked in real-time through your HostPilot portal. You can see all revenue, bookings, and payouts in one dashboard. Revenue distribution is automated and transparent, so you always know where your money is coming from and when you'll receive it."
     },
     {
       question: "Can I still use Turo and other platforms alongside HostPilot?",

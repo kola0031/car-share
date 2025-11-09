@@ -16,7 +16,7 @@ const Testimonials = () => {
       author: "Atlanta Vehicle Host"
     },
     {
-      quote: "The VEVS portal is incredibly intuitive. I can see everything happening with my fleet in real-time.",
+      quote: "The HostPilot portal is incredibly intuitive. I can see everything happening with my fleet in real-time.",
       author: "Enterprise Client"
     }
   ];
@@ -39,7 +39,7 @@ const Testimonials = () => {
         <div className="profit-section">
           <h2 className="profit-title">Monitor your fleet, track revenue, and grow passive income — all hands-free</h2>
           <p className="profit-description">
-            Full-service fleet management platform for vehicle hosts. Access your VEVS portal anytime to see bookings, revenue, and fleet status — while HostPilot handles all operations.
+            Full-service fleet management platform for vehicle hosts. Access your HostPilot portal anytime to see bookings, revenue, and fleet status — while HostPilot handles all operations.
           </p>
         </div>
 
@@ -59,7 +59,7 @@ const Testimonials = () => {
           <h2 className="calculation-amount">$150/mo</h2>
           <p className="calculation-note">per host — includes everything</p>
           <p className="calculation-formula">
-            VEVS portal + PackMyShare parking + booking management + customer service + revenue tracking
+            HostPilot portal + PackMyShare parking + booking management + customer service + revenue tracking
           </p>
         </div>
 

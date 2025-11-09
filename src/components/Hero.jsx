@@ -1,6 +1,12 @@
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import LeadCapture from './LeadCapture';
 import './Hero.css';
 
 const Hero = () => {
+  const navigate = useNavigate();
+  const [showLeadForm, setShowLeadForm] = useState(false);
+
   return (
     <section className="hero">
       <div className="hero-container">
@@ -17,10 +23,7 @@ const Hero = () => {
               className="hero-btn-primary"
               onClick={(e) => {
                 e.preventDefault();
-                const footer = document.querySelector('footer');
-                if (footer) {
-                  footer.scrollIntoView({ behavior: 'smooth' });
-                }
+                setShowLeadForm(true);
               }}
             >
               GET STARTED TODAY
@@ -51,7 +54,28 @@ const Hero = () => {
             >
               VIEW PRICING
             </a>
+            <a 
+              href="/bookings" 
+              className="hero-btn-secondary"
+              onClick={(e) => {
+                e.preventDefault();
+                navigate('/bookings');
+              }}
+            >
+              BOOK A CAR
+            </a>
           </div>
+          {showLeadForm && (
+            <div className="hero-lead-form">
+              <LeadCapture 
+                type="host" 
+                onSuccess={() => {
+                  setShowLeadForm(false);
+                  setTimeout(() => navigate('/register'), 2000);
+                }}
+              />
+            </div>
+          )}
         </div>
         
         <div className="hero-stats">

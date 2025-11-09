@@ -3,16 +3,20 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { body, validationResult } from 'express-validator';
 import { getUsers, saveUsers, createUser } from '../database/users.js';
+import { createHost, getHostByUserId } from '../database/hosts.js';
+import { createSubscription } from '../database/subscriptions.js';
+import { createDriver, getDriverByUserId } from '../database/drivers.js';
 
 const router = express.Router();
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
 
-// Register
+// Register (Host or Driver)
 router.post('/register', [
   body('email').isEmail().normalizeEmail(),
   body('password').isLength({ min: 6 }),
   body('name').trim().notEmpty(),
   body('companyName').optional().trim(),
+  body('role').optional().isIn(['host', 'driver']),
 ], async (req, res) => {
   try {
     const errors = validationResult(req);
@@ -20,7 +24,7 @@ router.post('/register', [
       return res.status(400).json({ errors: errors.array() });
     }
 
-    const { email, password, name, companyName } = req.body;
+    const { email, password, name, companyName, role = 'host' } = req.body;
 
     const users = getUsers();
     
@@ -38,16 +42,48 @@ router.post('/register', [
       password: hashedPassword,
       name,
       companyName: companyName || '',
-      role: 'host',
+      role: role,
       createdAt: new Date().toISOString(),
     });
 
     users.push(newUser);
     saveUsers(users);
 
+    let hostId = null;
+    let driverId = null;
+
+    if (role === 'host') {
+      // Create host profile
+      const host = createHost({
+        userId: newUser.id,
+        companyName: companyName || name + "'s Fleet",
+        serviceTier: 'Basic',
+        subscriptionStatus: 'active',
+        monthlySubscriptionFee: 299,
+        onboardingStatus: 'pending',
+      });
+      hostId = host.id;
+
+      // Create subscription
+      const subscription = createSubscription({
+        hostId: host.id,
+        serviceTier: 'Basic',
+        status: 'active',
+      });
+    } else if (role === 'driver') {
+      // Create driver profile
+      const driver = createDriver({
+        userId: newUser.id,
+        email: newUser.email,
+        name: newUser.name,
+        verificationStatus: 'pending',
+      });
+      driverId = driver.id;
+    }
+
     // Generate JWT
     const token = jwt.sign(
-      { userId: newUser.id, email: newUser.email, role: newUser.role },
+      { userId: newUser.id, email: newUser.email, role: newUser.role, hostId, driverId },
       JWT_SECRET,
       { expiresIn: '7d' }
     );
@@ -61,6 +97,8 @@ router.post('/register', [
         name: newUser.name,
         companyName: newUser.companyName,
         role: newUser.role,
+        hostId,
+        driverId,
       },
     });
   } catch (error) {
@@ -95,9 +133,21 @@ router.post('/login', [
       return res.status(401).json({ message: 'Invalid email or password' });
     }
 
+    // Get host or driver information
+    let hostId = null;
+    let driverId = null;
+    
+    if (user.role === 'host') {
+      const host = getHostByUserId(user.id);
+      hostId = host ? host.id : null;
+    } else if (user.role === 'driver') {
+      const driver = getDriverByUserId(user.id);
+      driverId = driver ? driver.id : null;
+    }
+
     // Generate JWT
     const token = jwt.sign(
-      { userId: user.id, email: user.email, role: user.role },
+      { userId: user.id, email: user.email, role: user.role, hostId, driverId },
       JWT_SECRET,
       { expiresIn: '7d' }
     );
@@ -111,6 +161,8 @@ router.post('/login', [
         name: user.name,
         companyName: user.companyName,
         role: user.role,
+        hostId,
+        driverId,
       },
     });
   } catch (error) {
@@ -141,6 +193,18 @@ router.get('/verify', async (req, res) => {
         return res.status(404).json({ message: 'User not found' });
       }
 
+      // Get host or driver information
+      let hostId = null;
+      let driverId = null;
+      
+      if (user.role === 'host') {
+        const host = getHostByUserId(user.id);
+        hostId = host ? host.id : null;
+      } else if (user.role === 'driver') {
+        const driver = getDriverByUserId(user.id);
+        driverId = driver ? driver.id : null;
+      }
+
       res.json({
         valid: true,
         user: {
@@ -149,6 +213,8 @@ router.get('/verify', async (req, res) => {
           name: user.name,
           companyName: user.companyName,
           role: user.role,
+          hostId,
+          driverId,
         },
       });
     });

@@ -55,6 +55,38 @@
 .register-subtitle {
   color: var(--text-secondary);
   font-size: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.role-selector {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.role-btn {
+  flex: 1;
+  padding: 0.8rem 1.5rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 2px solid var(--border-color);
+  border-radius: 12px;
+  color: var(--text-secondary);
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.role-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: var(--primary);
+}
+
+.role-btn.active {
+  background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+  border-color: transparent;
+  color: white;
+  box-shadow: var(--shadow-md);
 }
 
 .register-form {

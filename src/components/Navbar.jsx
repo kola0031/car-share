@@ -67,13 +67,32 @@ const Navbar = () => {
           </a>
           {isAuthenticated ? (
             <>
-              <Link 
-                to="/dashboard" 
-                className="login-link"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                Dashboard
-              </Link>
+              {user?.role === 'driver' ? (
+                <>
+                  <Link 
+                    to="/bookings" 
+                    className="login-link"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    Book a Trip
+                  </Link>
+                  <Link 
+                    to="/driver/trips" 
+                    className="login-link"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    My Trips
+                  </Link>
+                </>
+              ) : (
+                <Link 
+                  to="/dashboard" 
+                  className="login-link"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  Dashboard
+                </Link>
+              )}
               <a 
                 href="#" 
                 className="login-link"
@@ -88,13 +107,22 @@ const Navbar = () => {
               </a>
             </>
           ) : (
-            <Link 
-              to="/login" 
-              className="login-link"
-              onClick={() => setIsMenuOpen(false)}
-            >
-              Login
-            </Link>
+            <>
+              <Link 
+                to="/bookings" 
+                className="login-link"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                Book a Car
+              </Link>
+              <Link 
+                to="/login" 
+                className="login-link"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                Login
+              </Link>
+            </>
           )}
           <a 
             href="#footer" 

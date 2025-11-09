@@ -10,6 +10,7 @@ const Register = () => {
     password: '',
     confirmPassword: '',
     companyName: '',
+    role: 'host', // host or driver
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -43,7 +44,12 @@ const Register = () => {
     const result = await register(registerData);
     
     if (result.success) {
-      navigate('/dashboard');
+      // Redirect based on role
+      if (formData.role === 'driver') {
+        navigate('/bookings');
+      } else {
+        navigate('/onboarding');
+      }
     } else {
       setError(result.error || 'Registration failed');
     }
@@ -57,6 +63,22 @@ const Register = () => {
         <div className="register-header">
           <h1 className="register-title">HostPilot</h1>
           <p className="register-subtitle">Create your account to get started</p>
+          <div className="role-selector">
+            <button
+              type="button"
+              className={`role-btn ${formData.role === 'host' ? 'active' : ''}`}
+              onClick={() => setFormData({ ...formData, role: 'host' })}
+            >
+              I'm a Host
+            </button>
+            <button
+              type="button"
+              className={`role-btn ${formData.role === 'driver' ? 'active' : ''}`}
+              onClick={() => setFormData({ ...formData, role: 'driver' })}
+            >
+              I'm a Driver
+            </button>
+          </div>
         </div>
 
         {error && (
@@ -94,18 +116,20 @@ const Register = () => {
             />
           </div>
 
-          <div className="form-group">
-            <label htmlFor="companyName">Company Name (Optional)</label>
-            <input
-              type="text"
-              id="companyName"
-              name="companyName"
-              value={formData.companyName}
-              onChange={handleChange}
-              placeholder="Your Company"
-              disabled={loading}
-            />
-          </div>
+          {formData.role === 'host' && (
+            <div className="form-group">
+              <label htmlFor="companyName">Company Name (Optional)</label>
+              <input
+                type="text"
+                id="companyName"
+                name="companyName"
+                value={formData.companyName}
+                onChange={handleChange}
+                placeholder="Your Company"
+                disabled={loading}
+              />
+            </div>
+          )}
 
           <div className="form-group">
             <label htmlFor="password">Password</label>

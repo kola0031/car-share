@@ -110,3 +110,183 @@ export const vehiclesAPI = {
   }),
 };
 
+// Hosts API
+export const hostsAPI = {
+  getAll: () => request('/hosts'),
+  getOne: (id) => request(`/hosts/${id}`),
+  getByUserId: (userId) => request(`/hosts/user/${userId}`),
+  getDashboard: (id) => request(`/hosts/${id}/dashboard`),
+  create: (data) => request('/hosts', {
+    method: 'POST',
+    body: data,
+  }),
+  update: (id, data) => request(`/hosts/${id}`, {
+    method: 'PUT',
+    body: data,
+  }),
+  delete: (id) => request(`/hosts/${id}`, {
+    method: 'DELETE',
+  }),
+};
+
+// Fleets API
+export const fleetsAPI = {
+  getAll: () => request('/fleets'),
+  getOne: (id) => request(`/fleets/${id}`),
+  create: (data) => request('/fleets', {
+    method: 'POST',
+    body: data,
+  }),
+  update: (id, data) => request(`/fleets/${id}`, {
+    method: 'PUT',
+    body: data,
+  }),
+  delete: (id) => request(`/fleets/${id}`, {
+    method: 'DELETE',
+  }),
+};
+
+// Subscriptions API
+export const subscriptionsAPI = {
+  getTiers: () => request('/subscriptions/tiers'),
+  getCurrent: (hostId) => request(`/subscriptions?hostId=${hostId}`),
+  getOne: (id) => request(`/subscriptions/${id}`),
+  create: (data) => request('/subscriptions', {
+    method: 'POST',
+    body: data,
+  }),
+  update: (id, data) => request(`/subscriptions/${id}`, {
+    method: 'PUT',
+    body: data,
+  }),
+  cancel: (id) => request(`/subscriptions/${id}/cancel`, {
+    method: 'POST',
+  }),
+  delete: (id) => request(`/subscriptions/${id}`, {
+    method: 'DELETE',
+  }),
+};
+
+// Performance API
+export const performanceAPI = {
+  getDashboard: (hostId) => request(`/performance/dashboard/${hostId}`),
+  getRevenue: (hostId, startDate, endDate) => {
+    const params = new URLSearchParams();
+    if (startDate) params.append('startDate', startDate);
+    if (endDate) params.append('endDate', endDate);
+    return request(`/performance/revenue/${hostId}?${params.toString()}`);
+  },
+};
+
+// Tickets API
+export const ticketsAPI = {
+  getTypes: () => request('/tickets/types'),
+  getAll: (hostId, filters = {}) => {
+    const params = new URLSearchParams({ hostId, ...filters });
+    return request(`/tickets?${params.toString()}`);
+  },
+  getOne: (id) => request(`/tickets/${id}`),
+  create: (data) => request('/tickets', {
+    method: 'POST',
+    body: data,
+  }),
+  update: (id, data) => request(`/tickets/${id}`, {
+    method: 'PUT',
+    body: data,
+  }),
+  delete: (id) => request(`/tickets/${id}`, {
+    method: 'DELETE',
+  }),
+};
+
+// Leads API
+export const leadsAPI = {
+  getAll: (filters = {}) => {
+    const params = new URLSearchParams(filters);
+    return request(`/leads?${params.toString()}`);
+  },
+  getOne: (id) => request(`/leads/${id}`),
+  create: (data) => request('/leads', {
+    method: 'POST',
+    body: data,
+  }),
+  update: (id, data) => request(`/leads/${id}`, {
+    method: 'PUT',
+    body: data,
+  }),
+  delete: (id) => request(`/leads/${id}`, {
+    method: 'DELETE',
+  }),
+};
+
+// Bookings API
+export const bookingsAPI = {
+  getAll: (filters = {}) => {
+    const params = new URLSearchParams(filters);
+    return request(`/bookings?${params.toString()}`);
+  },
+  getAvailable: (startDate, endDate, location) => {
+    const params = new URLSearchParams({ startDate, endDate });
+    if (location) params.append('location', location);
+    return request(`/bookings/available?${params.toString()}`);
+  },
+  getOne: (id) => request(`/bookings/${id}`),
+  create: (data) => request('/bookings', {
+    method: 'POST',
+    body: data,
+  }),
+  update: (id, data) => request(`/bookings/${id}`, {
+    method: 'PUT',
+    body: data,
+  }),
+  cancel: (id) => request(`/bookings/${id}/cancel`, {
+    method: 'POST',
+  }),
+  delete: (id) => request(`/bookings/${id}`, {
+    method: 'DELETE',
+  }),
+};
+
+// Trips API
+export const tripsAPI = {
+  getAll: (filters = {}) => {
+    const params = new URLSearchParams(filters);
+    return request(`/trips?${params.toString()}`);
+  },
+  getActive: () => request('/trips/active'),
+  getOne: (id) => request(`/trips/${id}`),
+  start: (id, data) => request(`/trips/${id}/start`, {
+    method: 'POST',
+    body: data,
+  }),
+  complete: (id, data) => request(`/trips/${id}/complete`, {
+    method: 'POST',
+    body: data,
+  }),
+  update: (id, data) => request(`/trips/${id}`, {
+    method: 'PUT',
+    body: data,
+  }),
+  delete: (id) => request(`/trips/${id}`, {
+    method: 'DELETE',
+  }),
+};
+
+// Drivers API
+export const driversAPI = {
+  getAll: () => request('/drivers'),
+  getOne: (id) => request(`/drivers/${id}`),
+  getByUserId: (userId) => request(`/drivers/user/${userId}`),
+  create: (data) => request('/drivers', {
+    method: 'POST',
+    body: data,
+  }),
+  update: (id, data) => request(`/drivers/${id}`, {
+    method: 'PUT',
+    body: data,
+  }),
+  delete: (id) => request(`/drivers/${id}`, {
+    method: 'DELETE',
+  }),
+};
+

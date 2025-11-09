@@ -39,9 +39,32 @@ export const createVehicle = (vehicleData) => {
   const vehicles = getVehicles();
   const newVehicle = {
     id: `vehicle_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+    hostId: vehicleData.hostId,
+    make: vehicleData.make || '',
+    model: vehicleData.model || '',
+    year: vehicleData.year || null,
+    vin: vehicleData.vin || '',
+    licensePlate: vehicleData.licensePlate || '',
+    color: vehicleData.color || '',
+    mileage: vehicleData.mileage || 0,
+    status: vehicleData.status || 'pending', // pending, available, rented, maintenance, inactive
+    dailyRate: vehicleData.dailyRate || 0,
+    photos: vehicleData.photos || [],
+    documents: {
+      registration: vehicleData.documents?.registration || null,
+      insurance: vehicleData.documents?.insurance || null,
+      inspection: vehicleData.documents?.inspection || null,
+    },
+    verificationStatus: vehicleData.verificationStatus || 'pending', // pending, verified, rejected
+    parkMyShareLocation: vehicleData.parkMyShareLocation || null,
+    maintenancePlan: vehicleData.maintenancePlan || 'standard', // standard, premium
+    features: vehicleData.features || [], // GPS, Bluetooth, etc.
     createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
     ...vehicleData,
   };
+  vehicles.push(newVehicle);
+  saveVehicles(vehicles);
   return newVehicle;
 };
 

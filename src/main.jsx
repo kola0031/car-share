@@ -13,6 +13,9 @@ const FAQPage = lazy(() => import('./routes/FAQPage.jsx'))
 const Login = lazy(() => import('./components/Login.jsx'))
 const Register = lazy(() => import('./components/Register.jsx'))
 const Dashboard = lazy(() => import('./routes/Dashboard.jsx'))
+const Onboarding = lazy(() => import('./routes/Onboarding.jsx'))
+const Bookings = lazy(() => import('./routes/Bookings.jsx'))
+const DriverTrips = lazy(() => import('./routes/DriverTrips.jsx'))
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
@@ -27,7 +30,10 @@ createRoot(document.getElementById('root')).render(
             <Route path="/faq" element={<FAQPage />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
+            <Route path="/onboarding" element={<Onboarding />} />
             <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/bookings" element={<Bookings />} />
+            <Route path="/driver/trips" element={<DriverTrips />} />
           </Routes>
         </Suspense>
       </AuthProvider>
