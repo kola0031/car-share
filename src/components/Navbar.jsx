@@ -124,20 +124,13 @@ const Navbar = () => {
               </Link>
             </>
           )}
-          <a 
-            href="#footer" 
+          <Link 
+            to="/register" 
             className="cta-button"
-            onClick={(e) => {
-              e.preventDefault();
-              const footer = document.querySelector('footer');
-              if (footer) {
-                footer.scrollIntoView({ behavior: 'smooth' });
-              }
-              setIsMenuOpen(false);
-            }}
+            onClick={() => setIsMenuOpen(false)}
           >
             GET STARTED
-          </a>
+          </Link>
           <a 
             href="#footer" 
             className="cta-button-secondary"

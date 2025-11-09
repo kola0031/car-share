@@ -1,23 +1,27 @@
 import { memo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import './Pricing.css';
 
 const Pricing = () => {
-  const handleCTAClick = (e, planName) => {
+  const navigate = useNavigate();
+  
+  const handleCTAClick = (e, planName, cta) => {
     e.preventDefault();
-    // For demo/profit demo calls, scroll to footer
-    if (planName === 'Enterprise') {
+    // If it's a "GET STARTED" button, navigate to register
+    if (cta === 'GET STARTED') {
+      navigate('/register');
+    } else if (planName === 'Enterprise' || cta === 'CONTACT US') {
+      // For Enterprise/Contact, scroll to footer
       const footer = document.querySelector('footer');
       if (footer) {
         footer.scrollIntoView({ behavior: 'smooth' });
       }
-    } else {
-      // For start buttons, you can customize this - scroll to footer or show a message
-      const footer = document.querySelector('footer');
-      if (footer) {
-        footer.scrollIntoView({ behavior: 'smooth' });
+    } else if (cta === 'LEARN MORE') {
+      // For Learn More, scroll to footer or FAQ
+      const faq = document.querySelector('#faq');
+      if (faq) {
+        faq.scrollIntoView({ behavior: 'smooth' });
       }
-      // Alternative: alert for demo purposes
-      // alert(`You clicked to start with the ${planName} plan!`);
     }
   };
   const plans = [
@@ -89,14 +93,11 @@ const Pricing = () => {
             <li>24/7 customer service & support</li>
           </ul>
           <a 
-            href="#footer" 
+            href="/register" 
             className="offer-cta"
             onClick={(e) => {
               e.preventDefault();
-              const footer = document.querySelector('footer');
-              if (footer) {
-                footer.scrollIntoView({ behavior: 'smooth' });
-              }
+              navigate('/register');
             }}
           >
             GET STARTED
@@ -124,9 +125,9 @@ const Pricing = () => {
                 ))}
               </ul>
               <a 
-                href={plan.custom ? "#footer" : "#footer"} 
+                href={plan.cta === 'GET STARTED' ? "/register" : "#footer"} 
                 className={`plan-cta ${plan.popular ? 'popular-cta' : ''}`}
-                onClick={(e) => handleCTAClick(e, plan.name)}
+                onClick={(e) => handleCTAClick(e, plan.name, plan.cta)}
               >
                 {plan.cta}
               </a>

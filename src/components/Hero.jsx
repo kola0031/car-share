@@ -1,11 +1,8 @@
-import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import LeadCapture from './LeadCapture';
 import './Hero.css';
 
 const Hero = () => {
   const navigate = useNavigate();
-  const [showLeadForm, setShowLeadForm] = useState(false);
 
   return (
     <section className="hero">
@@ -19,11 +16,11 @@ const Hero = () => {
           </p>
           <div className="hero-buttons">
             <a 
-              href="#footer" 
+              href="/register" 
               className="hero-btn-primary"
               onClick={(e) => {
                 e.preventDefault();
-                setShowLeadForm(true);
+                navigate('/register');
               }}
             >
               GET STARTED TODAY
@@ -65,17 +62,6 @@ const Hero = () => {
               BOOK A CAR
             </a>
           </div>
-          {showLeadForm && (
-            <div className="hero-lead-form">
-              <LeadCapture 
-                type="host" 
-                onSuccess={() => {
-                  setShowLeadForm(false);
-                  setTimeout(() => navigate('/register'), 2000);
-                }}
-              />
-            </div>
-          )}
         </div>
         
         <div className="hero-stats">
