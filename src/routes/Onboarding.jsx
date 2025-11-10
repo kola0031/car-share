@@ -10,6 +10,7 @@ const Onboarding = () => {
   const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState(1);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
   const [hostData, setHostData] = useState(null);
   
   const [formData, setFormData] = useState({
@@ -24,11 +25,23 @@ const Onboarding = () => {
   });
 
   useEffect(() => {
+    // Verify token is available before loading host data
+    const token = localStorage.getItem('token');
+    if (!token) {
+      setError('No authentication token found. Please log in again.');
+      return;
+    }
     loadHostData();
   }, [user]);
 
   const loadHostData = async () => {
-    if (!user?.hostId) return;
+    if (!user?.hostId) {
+      // If user doesn't have hostId, they might have just registered
+      // Wait a moment and check again, or show an error
+      console.warn('User does not have hostId yet');
+      setError('Host profile not found. Please try logging out and logging back in.');
+      return;
+    }
     try {
       const host = await hostsAPI.getOne(user.hostId);
       setHostData(host);
@@ -37,6 +50,7 @@ const Onboarding = () => {
       }
     } catch (error) {
       console.error('Error loading host data:', error);
+      setError(error.message || 'Failed to load host data. Please try refreshing the page.');
     }
   };
 
@@ -48,16 +62,23 @@ const Onboarding = () => {
   };
 
   const handleNext = async () => {
+    setError('');
+    
     if (currentStep === 1) {
       // Update company name
       try {
         setLoading(true);
+        if (!user?.hostId) {
+          setError('Host ID not found. Please try logging in again.');
+          return;
+        }
         await hostsAPI.update(user.hostId, {
           companyName: formData.companyName || user.name + "'s Fleet",
         });
         setCurrentStep(2);
       } catch (error) {
         console.error('Error updating host:', error);
+        setError(error.message || 'Failed to update company name. Please try again.');
       } finally {
         setLoading(false);
       }
@@ -65,12 +86,17 @@ const Onboarding = () => {
       // Create fleet
       try {
         setLoading(true);
+        if (!user?.hostId) {
+          setError('Host ID not found. Please try logging out and logging back in.');
+          return;
+        }
         await fleetsAPI.create({
           name: formData.fleetName || 'Main Fleet',
         });
         setCurrentStep(3);
       } catch (error) {
         console.error('Error creating fleet:', error);
+        setError(error.message || 'Failed to create fleet. Please try again.');
       } finally {
         setLoading(false);
       }
@@ -137,6 +163,19 @@ const Onboarding = () => {
             <h1 className="onboarding-title">Welcome to HostPilot!</h1>
             <p className="onboarding-subtitle">Let's get your account set up in just a few steps</p>
           </div>
+
+          {error && (
+            <div className="error-message" style={{ 
+              padding: '12px', 
+              margin: '16px 0', 
+              backgroundColor: '#fee', 
+              color: '#c33', 
+              borderRadius: '4px',
+              border: '1px solid #fcc'
+            }}>
+              {error}
+            </div>
+          )}
 
           {/* Progress Steps */}
           <div className="steps-indicator">

@@ -1,4 +1,4 @@
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
 
 // Get auth token from localStorage
 const getToken = () => {
@@ -8,6 +8,12 @@ const getToken = () => {
 // API request helper
 const request = async (endpoint, options = {}) => {
   const token = getToken();
+  
+  // Debug: Log token status for authentication-required endpoints
+  if (!token && (endpoint.includes('/hosts') || endpoint.includes('/fleets') || endpoint.includes('/vehicles'))) {
+    console.warn('No token found for authenticated endpoint:', endpoint);
+  }
+  
   const config = {
     headers: {
       'Content-Type': 'application/json',
@@ -38,14 +44,34 @@ const request = async (endpoint, options = {}) => {
       // Handle 401/403 errors by clearing invalid token
       if (response.status === 401 || response.status === 403) {
         const token = getToken();
+        console.error('Authentication failed:', {
+          status: response.status,
+          message: data.message,
+          error: data.error,
+          hasToken: !!token,
+          endpoint: endpoint
+        });
+        
         if (token) {
-          localStorage.removeItem('token');
-          // Redirect to login if we're not already there
+          // Only redirect if we're not on login/register pages and not during onboarding
+          const currentPath = window.location.pathname;
+          if (currentPath !== '/login' && currentPath !== '/register' && !currentPath.startsWith('/onboarding')) {
+            localStorage.removeItem('token');
+            window.location.href = '/login?expired=true';
+          } else {
+            // If we're on onboarding, just throw the error without redirecting
+            // Include more details about the error
+            const errorMsg = data.message || 'Authentication failed. Please try logging out and logging back in.';
+            throw new Error(errorMsg);
+          }
+        } else {
+          // No token, redirect to login
           if (window.location.pathname !== '/login' && window.location.pathname !== '/register') {
             window.location.href = '/login?expired=true';
           }
         }
       }
+      
       throw new Error(data.message || `Request failed: ${response.status}`);
     }
 
@@ -54,8 +80,9 @@ const request = async (endpoint, options = {}) => {
     console.error('API request error:', error);
     
     // Handle network errors (server not running, CORS, etc.)
-    if (error instanceof TypeError && error.message.includes('fetch')) {
-      throw new Error('Unable to connect to server. Please make sure the backend is running on port 5000.');
+    if (error instanceof TypeError && (error.message.includes('fetch') || error.message.includes('Load failed'))) {
+      const apiUrl = API_URL.replace('/api', '');
+      throw new Error(`Unable to connect to server at ${apiUrl}. Please make sure the backend is running.`);
     }
     
     throw error;

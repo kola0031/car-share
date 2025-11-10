@@ -24,15 +24,26 @@ const __dirname = dirname(__filename);
 dotenv.config({ path: join(__dirname, '.env') });
 
 const app = express();
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 3001;
+const NODE_ENV = process.env.NODE_ENV || 'development';
 
 // Middleware
-app.use(cors({
-  origin: ['http://localhost:5173', 'http://localhost:3000', 'http://localhost:5174'],
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-}));
+// CORS configuration - allow all origins in production when serving frontend from same origin
+const corsOptions = NODE_ENV === 'production' 
+  ? {
+      origin: true, // Allow same-origin requests
+      credentials: true,
+      methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+      allowedHeaders: ['Content-Type', 'Authorization'],
+    }
+  : {
+      origin: ['http://localhost:5173', 'http://localhost:3000', 'http://localhost:5174'],
+      credentials: true,
+      methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+      allowedHeaders: ['Content-Type', 'Authorization'],
+    };
+
+app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -51,34 +62,51 @@ app.use('/api/bookings', bookingsRoutes); // Mixed: some public, some protected
 app.use('/api/trips', authenticateToken, tripsRoutes);
 app.use('/api/drivers', authenticateToken, driversRoutes);
 
-// Root route
-app.get('/', (req, res) => {
-  res.json({ 
-    message: 'HostPilot API Server',
-    version: '1.0.0',
+// Root route (only in development - production serves frontend)
+if (NODE_ENV !== 'production') {
+  app.get('/', (req, res) => {
+    res.json({ 
+      message: 'HostPilot API Server',
+      version: '1.0.0',
       endpoints: {
-      health: '/api/health',
-      auth: '/api/auth',
-      dashboard: '/api/dashboard',
-      reservations: '/api/reservations',
-      vehicles: '/api/vehicles',
-      hosts: '/api/hosts',
-      fleets: '/api/fleets',
-      subscriptions: '/api/subscriptions',
-      performance: '/api/performance',
-      tickets: '/api/tickets',
-      leads: '/api/leads',
-      bookings: '/api/bookings',
-      trips: '/api/trips',
-      drivers: '/api/drivers'
-    }
+        health: '/api/health',
+        auth: '/api/auth',
+        dashboard: '/api/dashboard',
+        reservations: '/api/reservations',
+        vehicles: '/api/vehicles',
+        hosts: '/api/hosts',
+        fleets: '/api/fleets',
+        subscriptions: '/api/subscriptions',
+        performance: '/api/performance',
+        tickets: '/api/tickets',
+        leads: '/api/leads',
+        bookings: '/api/bookings',
+        trips: '/api/trips',
+        drivers: '/api/drivers'
+      }
+    });
   });
-});
+}
 
 // Health check
 app.get('/api/health', (req, res) => {
   res.json({ status: 'OK', message: 'Server is running' });
 });
+
+// Serve static files from the React app build directory (production only)
+if (NODE_ENV === 'production') {
+  const distPath = join(__dirname, '..', 'dist');
+  app.use(express.static(distPath));
+
+  // Serve React app for all non-API routes (SPA routing)
+  app.get('*', (req, res) => {
+    // Don't serve index.html for API routes
+    if (req.path.startsWith('/api')) {
+      return res.status(404).json({ message: 'API endpoint not found' });
+    }
+    res.sendFile(join(distPath, 'index.html'));
+  });
+}
 
 // Error handling middleware
 app.use((err, req, res, next) => {
