@@ -17,14 +17,33 @@ const request = async (endpoint, options = {}) => {
   const config = {
     headers: {
       'Content-Type': 'application/json',
-      ...(token && { Authorization: `Bearer ${token}` }),
       ...options.headers,
+      // Only add Authorization if not already provided in options.headers
+      ...(!options.headers?.Authorization && token && { Authorization: `Bearer ${token}` }),
     },
     ...options,
   };
+  
+  // Debug logging for verify requests
+  if (endpoint.includes('/auth/verify')) {
+    console.log('Verify request:', {
+      endpoint,
+      hasToken: !!token,
+      hasAuthHeader: !!config.headers.Authorization,
+      tokenPreview: token ? `${token.substring(0, 20)}...` : 'none'
+    });
+  }
 
   if (options.body && typeof options.body === 'object') {
     config.body = JSON.stringify(options.body);
+    // Debug logging for registration requests
+    if (endpoint.includes('/auth/register')) {
+      console.log('Registration request:', {
+        endpoint,
+        body: options.body,
+        serialized: config.body
+      });
+    }
   }
 
   try {
@@ -44,34 +63,103 @@ const request = async (endpoint, options = {}) => {
       // Handle 401/403 errors by clearing invalid token
       if (response.status === 401 || response.status === 403) {
         const token = getToken();
+        const currentPath = window.location.pathname;
+        const isOnboarding = currentPath.startsWith('/onboarding');
+        const isAuthPage = currentPath === '/login' || currentPath === '/register';
+        
+        // Determine the specific error type
+        const errorType = data.error || '';
+        const isExpired = errorType === 'TokenExpiredError' || data.message?.toLowerCase().includes('expired');
+        const isInvalid = errorType === 'JsonWebTokenError' || data.message?.toLowerCase().includes('invalid');
+        
         console.error('Authentication failed:', {
           status: response.status,
           message: data.message,
           error: data.error,
+          errorType: errorType,
+          isExpired: isExpired,
+          isInvalid: isInvalid,
           hasToken: !!token,
-          endpoint: endpoint
+          endpoint: endpoint,
+          currentPath: currentPath
         });
         
+        // Clear invalid/expired token from storage
+        if (token && (isExpired || isInvalid)) {
+          localStorage.removeItem('token');
+        }
+        
         if (token) {
-          // Only redirect if we're not on login/register pages and not during onboarding
-          const currentPath = window.location.pathname;
-          if (currentPath !== '/login' && currentPath !== '/register' && !currentPath.startsWith('/onboarding')) {
-            localStorage.removeItem('token');
-            window.location.href = '/login?expired=true';
+          // Build a more helpful error message
+          let errorMsg = data.message || 'Authentication failed';
+          
+          if (isExpired) {
+            errorMsg = 'Your session has expired. Please log in again.';
+          } else if (isInvalid) {
+            errorMsg = 'Your session is invalid. Please log in again.';
+          } else if (data.message) {
+            errorMsg = data.message;
+          }
+          
+          // During onboarding, provide more helpful error messages and don't redirect
+          if (isOnboarding) {
+            // For JsonWebTokenError, provide more specific guidance
+            if (isInvalid && errorType === 'JsonWebTokenError') {
+              throw new Error(
+                'Your session token is invalid. This usually happens if the server was restarted.\n\n' +
+                'Please log out and log back in to get a new token.'
+              );
+            }
+            throw new Error(errorMsg + ' Please try logging out and logging back in.');
+          }
+          
+          // For other protected routes, redirect to login
+          if (!isAuthPage) {
+            // Add a small delay to allow error to be logged
+            setTimeout(() => {
+              window.location.href = '/login?expired=true';
+            }, 100);
+            throw new Error(errorMsg);
           } else {
-            // If we're on onboarding, just throw the error without redirecting
-            // Include more details about the error
-            const errorMsg = data.message || 'Authentication failed. Please try logging out and logging back in.';
+            // On auth pages, just throw the error
             throw new Error(errorMsg);
           }
         } else {
-          // No token, redirect to login
-          if (window.location.pathname !== '/login' && window.location.pathname !== '/register') {
-            window.location.href = '/login?expired=true';
+          // No token, redirect to login (unless already there)
+          if (!isAuthPage && !isOnboarding) {
+            setTimeout(() => {
+              window.location.href = '/login?expired=true';
+            }, 100);
+            throw new Error('Authentication required. Please log in.');
+          } else {
+            throw new Error(data.message || 'Authentication required');
           }
         }
       }
       
+      // Handle 400 Bad Request (validation errors)
+      if (response.status === 400) {
+        // Check if it's a validation error with an errors array
+        if (data.errors && Array.isArray(data.errors) && data.errors.length > 0) {
+          // Format validation errors into a readable message
+          const errorMessages = data.errors.map(err => {
+            const field = err.param || err.field || 'field';
+            const msg = err.msg || err.message || 'Invalid value';
+            return `${field}: ${msg}`;
+          }).join(', ');
+          throw new Error(`Validation failed: ${errorMessages}`);
+        }
+        // Otherwise use the message if available
+        throw new Error(data.message || 'Bad request. Please check your input.');
+      }
+      
+      // Handle 404 errors with more context
+      if (response.status === 404) {
+        const errorMsg = data.message || 'Resource not found';
+        throw new Error(errorMsg);
+      }
+      
+      // Handle other errors
       throw new Error(data.message || `Request failed: ${response.status}`);
     }
 
@@ -82,7 +170,15 @@ const request = async (endpoint, options = {}) => {
     // Handle network errors (server not running, CORS, etc.)
     if (error instanceof TypeError && (error.message.includes('fetch') || error.message.includes('Load failed'))) {
       const apiUrl = API_URL.replace('/api', '');
-      throw new Error(`Unable to connect to server at ${apiUrl}. Please make sure the backend is running.`);
+      const port = apiUrl.split(':').pop() || '3001';
+      throw new Error(
+        `Unable to connect to server at ${apiUrl}.\n\n` +
+        `Please make sure the backend server is running:\n` +
+        `  1. Open a terminal in the project directory\n` +
+        `  2. Run: npm run dev:server\n` +
+        `  3. Or run both frontend and backend: npm run dev:all\n\n` +
+        `The server should start on port ${port}.`
+      );
     }
     
     throw error;
@@ -101,11 +197,18 @@ export const authAPI = {
     body: userData,
   }),
   
-  verify: () => request('/auth/verify', {
-    headers: {
-      Authorization: `Bearer ${getToken()}`,
-    },
-  }),
+  verify: () => {
+    const token = getToken();
+    if (!token) {
+      return Promise.reject(new Error('No token available for verification'));
+    }
+    return request('/auth/verify', {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+  },
 };
 
 // Dashboard API
@@ -327,4 +430,5 @@ export const driversAPI = {
     method: 'DELETE',
   }),
 };
+
 

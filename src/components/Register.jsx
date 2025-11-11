@@ -82,7 +82,15 @@ const Register = () => {
         </div>
 
         {error && (
-          <div className="error-message">
+          <div className="error-message" style={{
+            padding: '12px',
+            marginBottom: '16px',
+            backgroundColor: '#fee',
+            color: '#c33',
+            borderRadius: '4px',
+            border: '1px solid #fcc',
+            fontSize: '14px'
+          }}>
             {error}
           </div>
         )}

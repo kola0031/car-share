@@ -15,6 +15,55 @@ import { getVehicles } from '../database/vehicles.js';
 
 const router = express.Router();
 
+// Middleware to check if user owns the host or is accessing their own host
+const checkHostOwnership = (req, res, next) => {
+  const hostId = req.params.id;
+  const userId = req.user?.userId;
+  const tokenHostId = req.user?.hostId;
+
+  console.log('checkHostOwnership:', {
+    hostId,
+    userId,
+    tokenHostId,
+    userFromToken: req.user
+  });
+
+  // If hostId in token matches, allow access
+  if (tokenHostId === hostId) {
+    console.log('Access granted: token hostId matches');
+    return next();
+  }
+
+  // Otherwise, check if the host belongs to the user
+  const host = getHostById(hostId);
+  if (!host) {
+    console.log('Host not found:', hostId);
+    return res.status(404).json({ message: 'Host not found' });
+  }
+
+  console.log('Host found:', {
+    hostId: host.id,
+    hostUserId: host.userId,
+    tokenUserId: userId,
+    match: host.userId === userId
+  });
+
+  if (host.userId !== userId) {
+    console.log('Access denied: userId mismatch');
+    return res.status(403).json({ 
+      message: 'Access denied. You can only access your own host data.',
+      debug: {
+        hostUserId: host.userId,
+        tokenUserId: userId,
+        tokenHostId: tokenHostId
+      }
+    });
+  }
+
+  console.log('Access granted: userId matches');
+  next();
+};
+
 // Get all hosts (admin only - add admin check if needed)
 router.get('/', (req, res) => {
   try {
@@ -27,7 +76,7 @@ router.get('/', (req, res) => {
 });
 
 // Get host by ID
-router.get('/:id', (req, res) => {
+router.get('/:id', checkHostOwnership, (req, res) => {
   try {
     const host = getHostById(req.params.id);
     if (!host) {
@@ -43,7 +92,15 @@ router.get('/:id', (req, res) => {
 // Get host by user ID
 router.get('/user/:userId', (req, res) => {
   try {
-    const host = getHostByUserId(req.params.userId);
+    const userId = req.params.userId;
+    const tokenUserId = req.user?.userId;
+
+    // Users can only access their own host data
+    if (userId !== tokenUserId) {
+      return res.status(403).json({ message: 'Access denied. You can only access your own host data.' });
+    }
+
+    const host = getHostByUserId(userId);
     if (!host) {
       return res.status(404).json({ message: 'Host not found for this user' });
     }
@@ -55,7 +112,7 @@ router.get('/user/:userId', (req, res) => {
 });
 
 // Get host dashboard data
-router.get('/:id/dashboard', (req, res) => {
+router.get('/:id/dashboard', checkHostOwnership, (req, res) => {
   try {
     const host = getHostById(req.params.id);
     if (!host) {
@@ -108,7 +165,7 @@ router.post('/', [
 });
 
 // Update host
-router.put('/:id', (req, res) => {
+router.put('/:id', checkHostOwnership, (req, res) => {
   try {
     const host = updateHost(req.params.id, req.body);
     if (!host) {
@@ -122,7 +179,7 @@ router.put('/:id', (req, res) => {
 });
 
 // Delete host
-router.delete('/:id', (req, res) => {
+router.delete('/:id', checkHostOwnership, (req, res) => {
   try {
     const deleted = deleteHost(req.params.id);
     if (!deleted) {

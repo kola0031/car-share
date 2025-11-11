@@ -10,8 +10,18 @@ export const authenticateToken = (req, res, next) => {
 
   const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
   
-  jwt.verify(token, JWT_SECRET, (err, user) => {
+  // Log the secret being used (first 10 chars only for security)
+  console.log('JWT_SECRET being used:', JWT_SECRET ? `${JWT_SECRET.substring(0, 10)}...` : 'undefined');
+  
+  jwt.verify(token, JWT_SECRET, (err, decoded) => {
     if (err) {
+      console.error('JWT verification failed in middleware:', {
+        error: err.name,
+        message: err.message,
+        tokenPreview: token.substring(0, 20) + '...',
+        secretUsed: JWT_SECRET ? `${JWT_SECRET.substring(0, 10)}...` : 'undefined',
+        secretFromEnv: !!process.env.JWT_SECRET
+      });
       // Provide more detailed error information for debugging
       if (err.name === 'TokenExpiredError') {
         return res.status(403).json({ 
@@ -31,7 +41,14 @@ export const authenticateToken = (req, res, next) => {
         error: err.name || 'UnknownError'
       });
     }
-    req.user = user;
+    
+    console.log('JWT verified successfully:', {
+      userId: decoded.userId,
+      hostId: decoded.hostId,
+      role: decoded.role
+    });
+    
+    req.user = decoded;
     next();
   });
 };
