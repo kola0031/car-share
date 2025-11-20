@@ -83,14 +83,14 @@ const Onboarding = () => {
   const loadHostData = async (hostId) => {
     try {
       const host = await hostsAPI.getOne(hostId);
-      setHostData(host);
-      
+      setHostId(hostId);
+
       // If onboarding is already completed, redirect to dashboard
       if (host.onboardingStatus === 'completed') {
         navigate('/dashboard');
         return;
       }
-      
+
       // Pre-fill form data if available
       if (host.companyName) {
         setFormData(prev => ({ ...prev, companyName: host.companyName }));
@@ -98,10 +98,11 @@ const Onboarding = () => {
       if (host.parkMyShareLocation) {
         setFormData(prev => ({ ...prev, parkMyShareLocation: host.parkMyShareLocation }));
       }
-    };
-
-    init();
-  }, [user, authLoading, navigate, refreshUser]);
+    } catch (err) {
+      console.warn('Could not load host data:', err);
+      // Continue anyway - we have hostId
+    }
+  };
 
   const handleChange = (e) => {
     setFormData({
@@ -127,34 +128,18 @@ const Onboarding = () => {
     }
 
     setError('');
-    
-    // Ensure we have hostId
-    const hostId = user?.hostId || hostData?.id;
-    if (!hostId) {
-      setError('Host ID not found. Please try refreshing the page or logging out and back in.');
-      return;
-    }
-    
-    if (currentStep === 1) {
-      // Update company name
+    setLoading(true);
+
+    try {
+      // Update host with company name and location, then mark as completed
+      await hostsAPI.update(hostId, {
+        companyName: formData.companyName || user?.name + "'s Fleet",
+        parkMyShareLocation: formData.parkMyShareLocation || 'Atlanta, GA',
+        onboardingStatus: 'completed',
+      });
+
+      // Optionally create a default fleet (non-blocking)
       try {
-        setLoading(true);
-        await hostsAPI.update(hostId, {
-          companyName: formData.companyName || user?.name + "'s Fleet",
-        });
-        // Refresh host data
-        await loadHostData(hostId);
-        setCurrentStep(2);
-      } catch (error) {
-        console.error('Error updating host:', error);
-        setError(error.message || 'Failed to update company name. Please try again.');
-      } finally {
-        setLoading(false);
-      }
-    } else if (currentStep === 2) {
-      // Create fleet
-      try {
-        setLoading(true);
         await fleetsAPI.create({
           name: 'Main Fleet',
         });
@@ -162,48 +147,10 @@ const Onboarding = () => {
         console.warn('Could not create default fleet:', fleetError);
         // Continue anyway - fleet creation is optional
       }
-    } else if (currentStep === 3) {
-      // Add vehicle
-      if (formData.vehicleMake && formData.vehicleModel) {
-        try {
-          setLoading(true);
-          await vehiclesAPI.create({
-            make: formData.vehicleMake,
-            model: formData.vehicleModel,
-            year: formData.vehicleYear,
-            licensePlate: formData.vehicleLicensePlate,
-            vin: formData.vehicleVIN,
-            status: 'available',
-            hostId: hostId,
-          });
-          setCurrentStep(4);
-        } catch (error) {
-          console.error('Error creating vehicle:', error);
-          setError(error.message || 'Failed to create vehicle. Please try again.');
-        } finally {
-          setLoading(false);
-        }
-      } else {
-        setCurrentStep(4);
-      }
-    } else if (currentStep === 4) {
-      // Complete onboarding
-      try {
-        setLoading(true);
-        await hostsAPI.update(hostId, {
-          onboardingStatus: 'completed',
-          parkMyShareLocation: formData.parkMyShareLocation || 'Atlanta, GA',
-        });
-        // Refresh user data to get updated onboarding status
-        if (refreshUser) {
-          await refreshUser();
-        }
-        navigate('/dashboard');
-      } catch (error) {
-        console.error('Error completing onboarding:', error);
-        setError(error.message || 'Failed to complete onboarding. Please try again.');
-      } finally {
-        setLoading(false);
+
+      // Refresh user data
+      if (refreshUser) {
+        await refreshUser();
       }
 
       // Navigate to dashboard
@@ -304,35 +251,17 @@ const Onboarding = () => {
               whiteSpace: 'pre-line'
             }}>
               {error}
-              {(error.includes('Host profile not found') || 
-                error.includes('session') || 
-                error.includes('expired') || 
+              {(error.includes('Host profile not found') ||
+                error.includes('session') ||
+                error.includes('expired') ||
                 error.includes('invalid') ||
                 error.includes('Authentication')) && (
-                <div style={{ marginTop: '12px', display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                  <button 
-                    onClick={initializeOnboarding}
-                    style={{
-                      padding: '8px 16px',
-                      backgroundColor: '#007bff',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '4px',
-                      cursor: 'pointer',
-                      fontSize: '14px'
-                    }}
-                  >
-                    Retry
-                  </button>
-                  {(error.includes('session') || error.includes('expired') || error.includes('invalid')) && (
-                    <button 
-                      onClick={() => {
-                        logout();
-                        navigate('/login');
-                      }}
+                  <div style={{ marginTop: '12px', display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                    <button
+                      onClick={initializeOnboarding}
                       style={{
                         padding: '8px 16px',
-                        backgroundColor: '#6c757d',
+                        backgroundColor: '#007bff',
                         color: 'white',
                         border: 'none',
                         borderRadius: '4px',
@@ -340,14 +269,32 @@ const Onboarding = () => {
                         fontSize: '14px'
                       }}
                     >
-                      Go to Login
+                      Retry
                     </button>
-                  )}
-                </div>
-              )}
+                    {(error.includes('session') || error.includes('expired') || error.includes('invalid')) && (
+                      <button
+                        onClick={() => {
+                          logout();
+                          navigate('/login');
+                        }}
+                        style={{
+                          padding: '8px 16px',
+                          backgroundColor: '#6c757d',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: '4px',
+                          cursor: 'pointer',
+                          fontSize: '14px'
+                        }}
+                      >
+                        Go to Login
+                      </button>
+                    )}
+                  </div>
+                )}
               {error.includes('Unable to connect to server') && (
                 <div style={{ marginTop: '12px' }}>
-                  <button 
+                  <button
                     onClick={initializeOnboarding}
                     style={{
                       padding: '8px 16px',
