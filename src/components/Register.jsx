@@ -40,21 +40,26 @@ const Register = () => {
 
     setLoading(true);
 
-    const { confirmPassword, ...registerData } = formData;
-    const result = await register(registerData);
-    
-    if (result.success) {
-      // Redirect based on role
-      if (formData.role === 'driver') {
-        navigate('/bookings');
+    try {
+      const { confirmPassword, ...registerData } = formData;
+      const result = await register(registerData);
+
+      if (result.success) {
+        // Redirect based on role
+        if (formData.role === 'driver') {
+          navigate('/bookings');
+        } else {
+          navigate('/onboarding');
+        }
       } else {
-        navigate('/onboarding');
+        setError(result.error || 'Registration failed. Please try again.');
       }
-    } else {
-      setError(result.error || 'Registration failed');
+    } catch (err) {
+      setError('An unexpected error occurred. Please try again.');
+      console.error('Register submit error:', err);
+    } finally {
+      setLoading(false);
     }
-    
-    setLoading(false);
   };
 
   return (
@@ -82,7 +87,7 @@ const Register = () => {
         </div>
 
         {error && (
-          <div className="error-message" style={{
+          <div className="error-message" role="alert" style={{
             padding: '12px',
             marginBottom: '16px',
             backgroundColor: '#fee',
@@ -107,6 +112,7 @@ const Register = () => {
               required
               placeholder="John Doe"
               disabled={loading}
+              autoComplete="name"
             />
           </div>
 
@@ -121,6 +127,7 @@ const Register = () => {
               required
               placeholder="you@example.com"
               disabled={loading}
+              autoComplete="email"
             />
           </div>
 
@@ -135,6 +142,7 @@ const Register = () => {
                 onChange={handleChange}
                 placeholder="Your Company"
                 disabled={loading}
+                autoComplete="organization"
               />
             </div>
           )}
@@ -151,6 +159,7 @@ const Register = () => {
               placeholder="••••••••"
               minLength={6}
               disabled={loading}
+              autoComplete="new-password"
             />
           </div>
 
@@ -166,11 +175,16 @@ const Register = () => {
               placeholder="••••••••"
               minLength={6}
               disabled={loading}
+              autoComplete="new-password"
             />
           </div>
 
           <button type="submit" className="register-button" disabled={loading}>
-            {loading ? 'Creating account...' : 'Create Account'}
+            {loading ? (
+              <span className="loading-spinner">Creating account...</span>
+            ) : (
+              'Create Account'
+            )}
           </button>
         </form>
 

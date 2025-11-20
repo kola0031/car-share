@@ -8,22 +8,22 @@ const getToken = () => {
 // API request helper
 const request = async (endpoint, options = {}) => {
   const token = getToken();
-  
+
   // Debug: Log token status for authentication-required endpoints
   if (!token && (endpoint.includes('/hosts') || endpoint.includes('/fleets') || endpoint.includes('/vehicles'))) {
     console.warn('No token found for authenticated endpoint:', endpoint);
   }
-  
+
   const config = {
+    ...options,
     headers: {
       'Content-Type': 'application/json',
       ...options.headers,
       // Only add Authorization if not already provided in options.headers
       ...(!options.headers?.Authorization && token && { Authorization: `Bearer ${token}` }),
     },
-    ...options,
   };
-  
+
   // Debug logging for verify requests
   if (endpoint.includes('/auth/verify')) {
     console.log('Verify request:', {
@@ -48,7 +48,7 @@ const request = async (endpoint, options = {}) => {
 
   try {
     const response = await fetch(`${API_URL}${endpoint}`, config);
-    
+
     // Handle non-JSON responses or network errors
     let data;
     const contentType = response.headers.get('content-type');
@@ -66,12 +66,12 @@ const request = async (endpoint, options = {}) => {
         const currentPath = window.location.pathname;
         const isOnboarding = currentPath.startsWith('/onboarding');
         const isAuthPage = currentPath === '/login' || currentPath === '/register';
-        
+
         // Determine the specific error type
         const errorType = data.error || '';
         const isExpired = errorType === 'TokenExpiredError' || data.message?.toLowerCase().includes('expired');
         const isInvalid = errorType === 'JsonWebTokenError' || data.message?.toLowerCase().includes('invalid');
-        
+
         console.error('Authentication failed:', {
           status: response.status,
           message: data.message,
@@ -83,16 +83,16 @@ const request = async (endpoint, options = {}) => {
           endpoint: endpoint,
           currentPath: currentPath
         });
-        
+
         // Clear invalid/expired token from storage
         if (token && (isExpired || isInvalid)) {
           localStorage.removeItem('token');
         }
-        
+
         if (token) {
           // Build a more helpful error message
           let errorMsg = data.message || 'Authentication failed';
-          
+
           if (isExpired) {
             errorMsg = 'Your session has expired. Please log in again.';
           } else if (isInvalid) {
@@ -100,7 +100,7 @@ const request = async (endpoint, options = {}) => {
           } else if (data.message) {
             errorMsg = data.message;
           }
-          
+
           // During onboarding, provide more helpful error messages and don't redirect
           if (isOnboarding) {
             // For JsonWebTokenError, provide more specific guidance
@@ -112,7 +112,7 @@ const request = async (endpoint, options = {}) => {
             }
             throw new Error(errorMsg + ' Please try logging out and logging back in.');
           }
-          
+
           // For other protected routes, redirect to login
           if (!isAuthPage) {
             // Add a small delay to allow error to be logged
@@ -136,7 +136,7 @@ const request = async (endpoint, options = {}) => {
           }
         }
       }
-      
+
       // Handle 400 Bad Request (validation errors)
       if (response.status === 400) {
         // Check if it's a validation error with an errors array
@@ -152,13 +152,13 @@ const request = async (endpoint, options = {}) => {
         // Otherwise use the message if available
         throw new Error(data.message || 'Bad request. Please check your input.');
       }
-      
+
       // Handle 404 errors with more context
       if (response.status === 404) {
         const errorMsg = data.message || 'Resource not found';
         throw new Error(errorMsg);
       }
-      
+
       // Handle other errors
       throw new Error(data.message || `Request failed: ${response.status}`);
     }
@@ -166,7 +166,7 @@ const request = async (endpoint, options = {}) => {
     return data;
   } catch (error) {
     console.error('API request error:', error);
-    
+
     // Handle network errors (server not running, CORS, etc.)
     if (error instanceof TypeError && (error.message.includes('fetch') || error.message.includes('Load failed'))) {
       const apiUrl = API_URL.replace('/api', '');
@@ -180,7 +180,7 @@ const request = async (endpoint, options = {}) => {
         `The server should start on port ${port}.`
       );
     }
-    
+
     throw error;
   }
 };
@@ -191,12 +191,12 @@ export const authAPI = {
     method: 'POST',
     body: { email, password },
   }),
-  
+
   register: (userData) => request('/auth/register', {
     method: 'POST',
     body: userData,
   }),
-  
+
   verify: () => {
     const token = getToken();
     if (!token) {
