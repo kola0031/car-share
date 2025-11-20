@@ -16,6 +16,7 @@ import leadsRoutes from './routes/leads.js';
 import bookingsRoutes from './routes/bookings.js';
 import tripsRoutes from './routes/trips.js';
 import driversRoutes from './routes/drivers.js';
+import paymentsRoutes from './routes/payments.js';
 import { authenticateToken } from './middleware/auth.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -29,23 +30,26 @@ const NODE_ENV = process.env.NODE_ENV || 'development';
 
 // Middleware
 // CORS configuration - allow all origins in production when serving frontend from same origin
-const corsOptions = NODE_ENV === 'production' 
+const corsOptions = NODE_ENV === 'production'
   ? {
-      origin: true, // Allow same-origin requests
-      credentials: true,
-      methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-      allowedHeaders: ['Content-Type', 'Authorization'],
-    }
+    origin: true, // Allow same-origin requests
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+  }
   : {
-      origin: ['http://localhost:5173', 'http://localhost:3000', 'http://localhost:5174'],
-      credentials: true,
-      methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-      allowedHeaders: ['Content-Type', 'Authorization'],
-    };
+    origin: ['http://localhost:5173', 'http://localhost:3000', 'http://localhost:5174'],
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+  };
 
 app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Serve uploaded files
+app.use('/uploads', express.static(join(__dirname, 'uploads')));
 
 // Routes
 app.use('/api/auth', authRoutes);
@@ -61,11 +65,12 @@ app.use('/api/leads', leadsRoutes); // Public endpoint for lead capture
 app.use('/api/bookings', bookingsRoutes); // Mixed: some public, some protected
 app.use('/api/trips', authenticateToken, tripsRoutes);
 app.use('/api/drivers', authenticateToken, driversRoutes);
+app.use('/api/payments', authenticateToken, paymentsRoutes);
 
 // Root route (only in development - production serves frontend)
 if (NODE_ENV !== 'production') {
   app.get('/', (req, res) => {
-    res.json({ 
+    res.json({
       message: 'HostPilot API Server',
       version: '1.0.0',
       endpoints: {

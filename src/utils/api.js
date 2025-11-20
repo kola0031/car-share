@@ -249,6 +249,14 @@ export const vehiclesAPI = {
   delete: (id) => request(`/vehicles/${id}`, {
     method: 'DELETE',
   }),
+  uploadDocument: (id, data) => request(`/vehicles/${id}/documents`, {
+    method: 'POST',
+    body: data,
+  }),
+  uploadImage: (id, data) => request(`/vehicles/${id}/images`, {
+    method: 'POST',
+    body: data,
+  }),
 };
 
 // Hosts API

@@ -1,19 +1,38 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { hostsAPI, fleetsAPI } from '../utils/api';
+import { Elements } from '@stripe/react-stripe-js';
+import { loadStripe } from '@stripe/stripe-js';
+import { hostsAPI, vehiclesAPI } from '../utils/api';
 import ProtectedRoute from '../components/ProtectedRoute';
+import VehicleForm from '../components/VehicleForm';
+import DocumentUpload from '../components/DocumentUpload';
+import PaymentForm from '../components/PaymentForm';
 import './Onboarding.css';
 
+// Initialize Stripe (use test key for now)
+const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || 'pk_test_dummy');
+
+const STEPS = {
+  COMPANY: 1,
+  VEHICLE: 2,
+  DOCUMENTS: 3,
+  PAYMENT: 4,
+  COMPLETE: 5,
+};
+
 const Onboarding = () => {
-  const { user, loading: authLoading, refreshUser, logout } = useAuth();
+  const { user, loading: authLoading, refreshUser } = useAuth();
   const navigate = useNavigate();
+  const [currentStep, setCurrentStep] = useState(STEPS.COMPANY);
   const [loading, setLoading] = useState(false);
   const [initializing, setInitializing] = useState(true);
   const [error, setError] = useState('');
   const [hostId, setHostId] = useState(null);
+  const [vehicleId, setVehicleId] = useState(null);
+  const [paymentClientSecret, setPaymentClientSecret] = useState(null);
 
-  const [formData, setFormData] = useState({
+  const [companyData, setCompanyData] = useState({
     companyName: '',
     parkMyShareLocation: 'Atlanta, GA',
   });
@@ -23,207 +42,206 @@ const Onboarding = () => {
     setError('');
 
     try {
-      // Check if user is authenticated
       const token = localStorage.getItem('token');
       if (!token) {
-        setError('No authentication token found. Please log in again.');
-        setInitializing(false);
         navigate('/login');
         return;
       }
 
-      // If user doesn't have hostId, try to refresh user data first
       let currentUser = user;
       if (!currentUser?.hostId && refreshUser) {
         currentUser = await refreshUser();
       }
 
-      // If still no hostId, try to get host by userId
-      if (!currentUser?.hostId && currentUser?.id) {
-        try {
-          const host = await hostsAPI.getByUserId(currentUser.id);
-          if (host) {
-            // Update user context with hostId
-            if (refreshUser) {
-              await refreshUser();
-            }
-            currentUser = { ...currentUser, hostId: host.id };
-          }
-        } catch (err) {
-          console.warn('Could not find host by userId:', err);
-        }
-      }
-
-      // If we still don't have hostId, this is an error
       if (!currentUser?.hostId) {
-        setError('Host profile not found. Please ensure you registered as a host. If the problem persists, please contact support.');
+        setError('Host profile not found. Please contact support.');
         setInitializing(false);
         return;
       }
 
-      // Load host data
-      await loadHostData(currentUser.hostId);
+      setHostId(currentUser.hostId);
+
+      // Check if onboarding is already completed
+      const host = await hostsAPI.getOne(currentUser.hostId);
+      if (host.onboardingStatus === 'completed') {
+        navigate('/dashboard');
+        return;
+      }
+
+      // Pre-fill company data
+      if (host.companyName) {
+        setCompanyData(prev => ({ ...prev, companyName: host.companyName }));
+      }
     } catch (error) {
       console.error('Error initializing onboarding:', error);
-      setError(error.message || 'Failed to initialize onboarding. Please try refreshing the page.');
+      setError(error.message || 'Failed to initialize onboarding.');
     } finally {
       setInitializing(false);
     }
   }, [user, refreshUser, navigate]);
 
   useEffect(() => {
-    // Wait for auth to finish loading before proceeding
-    if (authLoading) {
+    if (!authLoading) {
+      initializeOnboarding();
+    }
+  }, [authLoading, initializeOnboarding]);
+
+  const handleCompanySubmit = async (e) => {
+    e.preventDefault();
+    if (!companyData.companyName.trim()) {
+      setError('Company name is required');
       return;
     }
 
-    initializeOnboarding();
-  }, [user, authLoading, initializeOnboarding]);
-
-  const loadHostData = async (hostId) => {
-    try {
-      const host = await hostsAPI.getOne(hostId);
-      setHostId(hostId);
-
-      // If onboarding is already completed, redirect to dashboard
-      if (host.onboardingStatus === 'completed') {
-        navigate('/dashboard');
-        return;
-      }
-
-      // Pre-fill form data if available
-      if (host.companyName) {
-        setFormData(prev => ({ ...prev, companyName: host.companyName }));
-      }
-      if (host.parkMyShareLocation) {
-        setFormData(prev => ({ ...prev, parkMyShareLocation: host.parkMyShareLocation }));
-      }
-    } catch (err) {
-      console.warn('Could not load host data:', err);
-      // Continue anyway - we have hostId
-    }
-  };
-
-  const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
-  };
-
-  const handleComplete = async () => {
-    if (!hostId) {
-      setError('Host ID not found. Please refresh the page.');
-      return;
-    }
-
-    // Verify token exists before making request
-    const token = localStorage.getItem('token');
-    if (!token) {
-      console.error('Onboarding: No token found in localStorage');
-      setError('Session expired. Please log in again.');
-      // Optional: Redirect to login after a delay
-      setTimeout(() => navigate('/login'), 2000);
-      return;
-    }
-
-    setError('');
     setLoading(true);
+    setError('');
 
     try {
-      // Update host with company name and location, then mark as completed
       await hostsAPI.update(hostId, {
-        companyName: formData.companyName || user?.name + "'s Fleet",
-        parkMyShareLocation: formData.parkMyShareLocation || 'Atlanta, GA',
-        onboardingStatus: 'completed',
+        companyName: companyData.companyName,
+        parkMyShareLocation: companyData.parkMyShareLocation,
+      });
+      setCurrentStep(STEPS.VEHICLE);
+    } catch (err) {
+      setError(err.message || 'Failed to save company information');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleVehicleSubmit = async (vehicleData) => {
+    setLoading(true);
+    setError('');
+
+    try {
+      const newVehicle = await vehiclesAPI.create({
+        ...vehicleData,
+        hostId,
+        status: 'available',
+        dailyRate: 0, // Default rate, can be updated later in fleet management
+      });
+      setVehicleId(newVehicle.id);
+      setCurrentStep(STEPS.DOCUMENTS);
+    } catch (err) {
+      setError(err.message || 'Failed to add vehicle');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDocumentUpload = async (uploadData) => {
+    if (!vehicleId) {
+      setError('No vehicle found. Please go back and add a vehicle first.');
+      return;
+    }
+
+    try {
+      await vehiclesAPI.uploadDocument(vehicleId, uploadData);
+    } catch (err) {
+      console.error('Document upload failed:', err);
+      throw err;
+    }
+  };
+
+  const handleSkipDocuments = () => {
+    setCurrentStep(STEPS.PAYMENT);
+  };
+
+  const handleContinueToPayment = async () => {
+    setLoading(true);
+    setError('');
+
+    try {
+      // Create payment intent for subscription
+      const response = await fetch('/api/payments/create-subscription', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        },
+        body: JSON.stringify({ tier: 'basic' }),
       });
 
-      // Optionally create a default fleet (non-blocking)
-      try {
-        await fleetsAPI.create({
-          name: 'Main Fleet',
-        });
-      } catch (fleetError) {
-        console.warn('Could not create default fleet:', fleetError);
-        // Continue anyway - fleet creation is optional
+      const data = await response.json();
+      if (!response.ok) {
+        console.error('Payment API error:', data);
+        throw new Error(data.message || 'Failed to initialize payment');
       }
+
+      setPaymentClientSecret(data.clientSecret);
+      setCurrentStep(STEPS.PAYMENT);
+    } catch (err) {
+      console.error('Payment initialization error:', err);
+      setError(err.message || 'Failed to initialize payment. You can skip this step for now.');
+      // Still go to payment step so user can see the skip option
+      setCurrentStep(STEPS.PAYMENT);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSkipPayment = async () => {
+    setLoading(true);
+    setError('');
+
+    try {
+      // Mark onboarding as completed without payment
+      await hostsAPI.update(hostId, {
+        onboardingStatus: 'completed',
+        subscriptionStatus: 'pending', // Mark as pending instead of active
+      });
 
       // Refresh user data
       if (refreshUser) {
         await refreshUser();
       }
 
-      // Navigate to dashboard
-      navigate('/dashboard');
-    } catch (error) {
-      console.error('Error completing onboarding:', error);
-      setError(error.message || 'Failed to complete setup. Please try again.');
+      setCurrentStep(STEPS.COMPLETE);
+      setTimeout(() => navigate('/dashboard'), 2000);
+    } catch (err) {
+      setError(err.message || 'Failed to complete onboarding');
     } finally {
       setLoading(false);
     }
   };
 
-  // Show loading state while initializing
+  const handlePaymentSuccess = async () => {
+    setLoading(true);
+
+    try {
+      // Mark onboarding as completed
+      await hostsAPI.update(hostId, {
+        onboardingStatus: 'completed',
+      });
+
+      // Refresh user data
+      if (refreshUser) {
+        await refreshUser();
+      }
+
+      setCurrentStep(STEPS.COMPLETE);
+
+      // Redirect to dashboard after 2 seconds
+      setTimeout(() => navigate('/dashboard'), 2000);
+    } catch (err) {
+      setError(err.message || 'Failed to complete onboarding');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handlePaymentError = (errorMessage) => {
+    setError(errorMessage);
+  };
+
   if (authLoading || initializing) {
     return (
       <ProtectedRoute>
         <div className="onboarding-container">
           <div className="onboarding-card">
             <div className="onboarding-header">
-              <h1 className="onboarding-title">Welcome to HostPilot!</h1>
-              <p className="onboarding-subtitle">Loading your account...</p>
-            </div>
-          </div>
-        </div>
-      </ProtectedRoute>
-    );
-  }
-
-  // Show error state if hostId not found
-  if (!hostId && !initializing) {
-    return (
-      <ProtectedRoute>
-        <div className="onboarding-container">
-          <div className="onboarding-card">
-            <div className="onboarding-header">
-              <h1 className="onboarding-title">Welcome to HostPilot!</h1>
-              <p className="onboarding-subtitle">Setup Required</p>
-            </div>
-            {error && (
-              <div className="error-message" style={{
-                padding: '16px',
-                margin: '16px 0',
-                backgroundColor: '#fee',
-                color: '#c33',
-                borderRadius: '8px',
-                border: '1px solid #fcc',
-              }}>
-                {error}
-              </div>
-            )}
-            <div style={{ textAlign: 'center', marginTop: '2rem' }}>
-              <button
-                onClick={() => window.location.reload()}
-                className="btn-primary"
-              >
-                Refresh Page
-              </button>
-            </div>
-          </div>
-        </div>
-      </ProtectedRoute>
-    );
-  }
-
-  // Show loading state while initializing
-  if (authLoading || initializing) {
-    return (
-      <ProtectedRoute>
-        <div className="onboarding-container">
-          <div className="onboarding-card">
-            <div className="onboarding-header">
-              <h1 className="onboarding-title">Welcome to HostPilot!</h1>
-              <p className="onboarding-subtitle">Loading your account...</p>
+              <h1>Welcome to HostPilot!</h1>
+              <p>Loading your account...</p>
             </div>
           </div>
         </div>
@@ -236,140 +254,157 @@ const Onboarding = () => {
       <div className="onboarding-container">
         <div className="onboarding-card">
           <div className="onboarding-header">
-            <h1 className="onboarding-title">Welcome to HostPilot!</h1>
-            <p className="onboarding-subtitle">Let's get your account set up</p>
+            <h1>Welcome to HostPilot!</h1>
+            <p>Let's get your fleet set up</p>
+          </div>
+
+          {/* Progress Indicator */}
+          <div className="progress-steps">
+            <div className={`step ${currentStep >= STEPS.COMPANY ? 'active' : ''} ${currentStep > STEPS.COMPANY ? 'completed' : ''}`}>
+              <span className="step-number">1</span>
+              <span className="step-label">Company</span>
+            </div>
+            <div className={`step ${currentStep >= STEPS.VEHICLE ? 'active' : ''} ${currentStep > STEPS.VEHICLE ? 'completed' : ''}`}>
+              <span className="step-number">2</span>
+              <span className="step-label">Vehicle</span>
+            </div>
+            <div className={`step ${currentStep >= STEPS.DOCUMENTS ? 'active' : ''} ${currentStep > STEPS.DOCUMENTS ? 'completed' : ''}`}>
+              <span className="step-number">3</span>
+              <span className="step-label">Documents</span>
+            </div>
+            <div className={`step ${currentStep >= STEPS.PAYMENT ? 'active' : ''} ${currentStep > STEPS.PAYMENT ? 'completed' : ''}`}>
+              <span className="step-number">4</span>
+              <span className="step-label">Payment</span>
+            </div>
           </div>
 
           {error && (
-            <div className="error-message" style={{
-              padding: '12px',
-              margin: '16px 0',
-              backgroundColor: '#fee',
-              color: '#c33',
-              borderRadius: '4px',
-              border: '1px solid #fcc',
-              whiteSpace: 'pre-line'
-            }}>
+            <div className="error-message" role="alert">
               {error}
-              {(error.includes('Host profile not found') ||
-                error.includes('session') ||
-                error.includes('expired') ||
-                error.includes('invalid') ||
-                error.includes('Authentication')) && (
-                  <div style={{ marginTop: '12px', display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                    <button
-                      onClick={initializeOnboarding}
-                      style={{
-                        padding: '8px 16px',
-                        backgroundColor: '#007bff',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '4px',
-                        cursor: 'pointer',
-                        fontSize: '14px'
-                      }}
-                    >
-                      Retry
-                    </button>
-                    {(error.includes('session') || error.includes('expired') || error.includes('invalid')) && (
-                      <button
-                        onClick={() => {
-                          logout();
-                          navigate('/login');
-                        }}
-                        style={{
-                          padding: '8px 16px',
-                          backgroundColor: '#6c757d',
-                          color: 'white',
-                          border: 'none',
-                          borderRadius: '4px',
-                          cursor: 'pointer',
-                          fontSize: '14px'
-                        }}
-                      >
-                        Go to Login
-                      </button>
-                    )}
-                  </div>
-                )}
-              {error.includes('Unable to connect to server') && (
-                <div style={{ marginTop: '12px' }}>
-                  <button
-                    onClick={initializeOnboarding}
-                    style={{
-                      padding: '8px 16px',
-                      backgroundColor: '#28a745',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '4px',
-                      cursor: 'pointer',
-                      fontSize: '14px'
-                    }}
-                  >
-                    Retry After Starting Server
-                  </button>
-                </div>
-              )}
             </div>
           )}
 
-          {/* Simple Single Form */}
-          <div className="step-content">
-            <div className="step-form">
-              <h2>Basic Information</h2>
-              <p className="step-help">Tell us a bit about your business</p>
+          <div className="onboarding-content">
+            {/* Step 1: Company Information */}
+            {currentStep === STEPS.COMPANY && (
+              <div className="step-content">
+                <h2>Company Information</h2>
+                <form onSubmit={handleCompanySubmit}>
+                  <div className="form-group">
+                    <label htmlFor="companyName">Company Name *</label>
+                    <input
+                      type="text"
+                      id="companyName"
+                      value={companyData.companyName}
+                      onChange={(e) => setCompanyData({ ...companyData, companyName: e.target.value })}
+                      placeholder="Your company name"
+                      disabled={loading}
+                      required
+                    />
+                  </div>
 
-              <div className="form-group">
-                <label htmlFor="companyName">Company/Fleet Name</label>
-                <input
-                  type="text"
-                  id="companyName"
-                  name="companyName"
-                  value={formData.companyName}
-                  onChange={handleChange}
-                  placeholder={user?.name ? `${user.name}'s Fleet` : 'My Fleet'}
-                  disabled={loading}
+                  <div className="form-group">
+                    <label htmlFor="location">ParkMyShare Location</label>
+                    <select
+                      id="location"
+                      value={companyData.parkMyShareLocation}
+                      onChange={(e) => setCompanyData({ ...companyData, parkMyShareLocation: e.target.value })}
+                      disabled={loading}
+                    >
+                      <option value="Atlanta, GA">Atlanta, GA</option>
+                      <option value="Miami, FL">Miami, FL</option>
+                      <option value="Los Angeles, CA">Los Angeles, CA</option>
+                      <option value="New York, NY">New York, NY</option>
+                      <option value="Chicago, IL">Chicago, IL</option>
+                    </select>
+                  </div>
+
+                  <button type="submit" className="btn-primary" disabled={loading}>
+                    {loading ? 'Saving...' : 'Continue'}
+                  </button>
+                </form>
+              </div>
+            )}
+
+            {/* Step 2: Add Vehicle */}
+            {currentStep === STEPS.VEHICLE && (
+              <div className="step-content">
+                <h2>Add Your First Vehicle</h2>
+                <p>Tell us about the vehicle you want to add to your fleet</p>
+                <VehicleForm onSubmit={handleVehicleSubmit} loading={loading} />
+              </div>
+            )}
+
+            {/* Step 3: Upload Documents */}
+            {currentStep === STEPS.DOCUMENTS && (
+              <div className="step-content">
+                <h2>Upload Vehicle Documents</h2>
+                <p>Add insurance, registration, or other documents (optional)</p>
+
+                <DocumentUpload
+                  onUpload={handleDocumentUpload}
+                  documentType="insurance"
+                  label="Insurance Certificate"
+                  accept="image/*,application/pdf"
                 />
-                <small>You can change this later in settings</small>
-              </div>
 
-              <div className="form-group">
-                <label htmlFor="parkMyShareLocation">Location</label>
-                <input
-                  type="text"
-                  id="parkMyShareLocation"
-                  name="parkMyShareLocation"
-                  value={formData.parkMyShareLocation}
-                  onChange={handleChange}
-                  placeholder="Atlanta, GA"
-                  disabled={loading}
+                <DocumentUpload
+                  onUpload={handleDocumentUpload}
+                  documentType="registration"
+                  label="Vehicle Registration"
+                  accept="image/*,application/pdf"
                 />
-                <small>Where your vehicles will be stored and guests can pick them up</small>
-              </div>
 
-              <div className="onboarding-summary">
-                <h3>What's Next?</h3>
-                <ul>
-                  <li>✓ Access your HostPilot dashboard</li>
-                  <li>✓ Add vehicles to your fleet</li>
-                  <li>✓ Set up your booking calendar</li>
-                  <li>✓ Start earning passive income!</li>
-                </ul>
+                <div className="button-group">
+                  <button onClick={handleSkipDocuments} className="btn-secondary">
+                    Skip for Now
+                  </button>
+                  <button onClick={handleContinueToPayment} className="btn-primary" disabled={loading}>
+                    {loading ? 'Loading...' : 'Continue to Payment'}
+                  </button>
+                </div>
               </div>
-            </div>
-          </div>
+            )}
 
-          {/* Complete Button */}
-          <div className="onboarding-actions">
-            <button
-              type="button"
-              className="btn-primary"
-              onClick={handleComplete}
-              disabled={loading}
-              style={{ width: '100%' }}
-            >
-              {loading ? 'Setting up...' : 'Complete Setup'}
-            </button>
+            {/* Step 4: Payment */}
+            {currentStep === STEPS.PAYMENT && (
+              <div className="step-content">
+                <h2>Subscribe to HostPilot</h2>
+                <p>Complete your subscription to start earning</p>
+
+                {paymentClientSecret ? (
+                  <Elements stripe={stripePromise}>
+                    <PaymentForm
+                      clientSecret={paymentClientSecret}
+                      onSuccess={handlePaymentSuccess}
+                      onError={handlePaymentError}
+                      tier="basic"
+                    />
+                  </Elements>
+                ) : (
+                  <div className="payment-placeholder">
+                    <div className="info-box">
+                      <p>⚠️ Payment processing is not configured yet.</p>
+                      <p>You can skip this step and set up payment later from your dashboard.</p>
+                    </div>
+                    <div className="button-group">
+                      <button onClick={handleSkipPayment} className="btn-primary" disabled={loading}>
+                        {loading ? 'Completing...' : 'Skip & Complete Onboarding'}
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Step 5: Complete */}
+            {currentStep === STEPS.COMPLETE && (
+              <div className="step-content success">
+                <div className="success-icon">✅</div>
+                <h2>All Set!</h2>
+                <p>Your account is ready. Redirecting to dashboard...</p>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -378,4 +413,3 @@ const Onboarding = () => {
 };
 
 export default Onboarding;
-

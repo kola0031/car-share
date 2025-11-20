@@ -62,3 +62,13 @@ export const updateUser = (userId, updates) => {
   return null;
 };
 
+export const getUserByEmail = (email) => {
+  const users = getUsers();
+  return users.find(u => u.email === email);
+};
+
+export const getUserByVerificationToken = (token) => {
+  const users = getUsers();
+  return users.find(u => u.verificationToken === token);
+};
+

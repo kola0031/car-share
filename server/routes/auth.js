@@ -2,10 +2,11 @@ import express from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { body, validationResult } from 'express-validator';
-import { getUsers, saveUsers, createUser } from '../database/users.js';
+import { getUsers, saveUsers, createUser, getUserByVerificationToken, updateUser } from '../database/users.js';
 import { createHost, getHostByUserId } from '../database/hosts.js';
 import { createSubscription } from '../database/subscriptions.js';
 import { createDriver, getDriverByUserId } from '../database/drivers.js';
+import { sendVerificationEmail, sendWelcomeEmail } from '../services/email.js';
 
 const router = express.Router();
 
@@ -248,6 +249,76 @@ router.get('/verify', async (req, res) => {
     });
   } catch (error) {
     console.error('Verify error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Verify email
+router.get('/verify-email/:token', async (req, res) => {
+  try {
+    const { token } = req.params;
+
+    const user = getUserByVerificationToken(token);
+
+    if (!user) {
+      return res.status(400).json({ message: 'Invalid or expired verification token' });
+    }
+
+    if (user.emailVerified) {
+      return res.status(200).json({ message: 'Email already verified' });
+    }
+
+    // Update user as verified
+    const updatedUser = updateUser(user.id, {
+      emailVerified: true,
+      verificationToken: null,
+    });
+
+    res.json({
+      message: 'Email verified successfully',
+      user: {
+        id: updatedUser.id,
+        email: updatedUser.email,
+        name: updatedUser.name,
+        emailVerified: updatedUser.emailVerified,
+      }
+    });
+  } catch (error) {
+    console.error('Verification error:', error);
+    res.status(500).json({ message: 'Server error during verification' });
+  }
+});
+
+// Resend verification email
+router.post('/resend-verification', [
+  body('email').isEmail().normalizeEmail(),
+  validate
+], async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    const users = getUsers();
+    const user = users.find(u => u.email === email);
+
+    if (!user) {
+      // Don't reveal if user exists or not
+      return res.json({ message: 'If the email exists, a verification link has been sent' });
+    }
+
+    if (user.emailVerified) {
+      return res.status(400).json({ message: 'Email already verified' });
+    }
+
+    // Send verification email
+    try {
+      await sendVerificationEmail(user.email, user.name, user.verificationToken);
+      res.json({ message: 'Verification email sent' });
+    } catch (emailError) {
+      console.error('Error sending verification email:', emailError);
+      res.status(500).json({ message: 'Failed to send verification email' });
+    }
+  } catch (error) {
+    console.error('Resend verification error:', error);
     res.status(500).json({ message: 'Server error' });
   }
 });
