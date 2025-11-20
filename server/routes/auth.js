@@ -8,39 +8,59 @@ import { createSubscription } from '../database/subscriptions.js';
 import { createDriver, getDriverByUserId } from '../database/drivers.js';
 
 const router = express.Router();
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
 
-// Log JWT_SECRET on startup (first 10 chars only for security)
-console.log('Auth routes initialized with JWT_SECRET:', JWT_SECRET ? `${JWT_SECRET.substring(0, 10)}...` : 'undefined');
+// Helper to get JWT secret
+const getJwtSecret = () => process.env.JWT_SECRET || 'your-secret-key-change-in-production';
+
+// Log JWT_SECRET on startup (delayed to ensure env is loaded)
+setTimeout(() => {
+  const secret = getJwtSecret();
+  console.log('Auth routes initialized with JWT_SECRET:', secret ? `${secret.substring(0, 10)}...` : 'undefined');
+}, 1000);
+
+// Validation Middleware
+const validate = (req, res, next) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    console.log('Validation errors:', errors.array());
+    return res.status(400).json({
+      message: 'Validation failed',
+      errors: errors.array().map(err => ({ field: err.path, message: err.msg }))
+    });
+  }
+  next();
+};
+
+const registerValidation = [
+  body('email').isEmail().withMessage('Invalid email address').normalizeEmail(),
+  body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters long'),
+  body('name').trim().notEmpty().withMessage('Name is required'),
+  body('companyName').optional().trim(),
+  body('role').optional().isIn(['host', 'driver']).withMessage('Invalid role'),
+  validate
+];
+
+const loginValidation = [
+  body('email').isEmail().withMessage('Invalid email address').normalizeEmail(),
+  body('password').notEmpty().withMessage('Password is required'),
+  validate
+];
 
 // Register (Host or Driver)
-router.post('/register', [
-  body('email').isEmail().normalizeEmail(),
-  body('password').isLength({ min: 6 }),
-  body('name').trim().notEmpty(),
-  body('companyName').optional().trim(),
-  body('role').optional().isIn(['host', 'driver']),
-], async (req, res) => {
+router.post('/register', registerValidation, async (req, res) => {
   try {
-    // Debug logging
     console.log('Registration request received:', {
-      body: req.body,
+      body: { ...req.body, password: '***' },
       headers: req.headers['content-type']
     });
-    
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      console.log('Validation errors:', errors.array());
-      return res.status(400).json({ errors: errors.array() });
-    }
 
     const { email, password, name, companyName, role = 'host' } = req.body;
 
     const users = getUsers();
-    
+
     // Check if user already exists
     if (users.find(u => u.email === email)) {
-      return res.status(400).json({ message: 'User already exists' });
+      return res.status(409).json({ message: 'User with this email already exists' });
     }
 
     // Hash password
@@ -75,7 +95,7 @@ router.post('/register', [
       hostId = host.id;
 
       // Create subscription
-      const subscription = createSubscription({
+      createSubscription({
         hostId: host.id,
         serviceTier: 'Basic',
         status: 'active',
@@ -92,10 +112,10 @@ router.post('/register', [
     }
 
     // Generate JWT
-    console.log('Signing registration token with JWT_SECRET:', JWT_SECRET ? `${JWT_SECRET.substring(0, 10)}...` : 'undefined');
+    console.log('Signing registration token');
     const token = jwt.sign(
       { userId: newUser.id, email: newUser.email, role: newUser.role, hostId, driverId },
-      JWT_SECRET,
+      getJwtSecret(),
       { expiresIn: '7d' }
     );
 
@@ -119,16 +139,8 @@ router.post('/register', [
 });
 
 // Login
-router.post('/login', [
-  body('email').isEmail().normalizeEmail(),
-  body('password').notEmpty(),
-], async (req, res) => {
+router.post('/login', loginValidation, async (req, res) => {
   try {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
-    }
-
     const { email, password } = req.body;
 
     const users = getUsers();
@@ -147,7 +159,7 @@ router.post('/login', [
     // Get host or driver information
     let hostId = null;
     let driverId = null;
-    
+
     if (user.role === 'host') {
       const host = getHostByUserId(user.id);
       hostId = host ? host.id : null;
@@ -157,10 +169,10 @@ router.post('/login', [
     }
 
     // Generate JWT
-    console.log('Signing token with JWT_SECRET:', JWT_SECRET ? `${JWT_SECRET.substring(0, 10)}...` : 'undefined');
+    console.log('Signing login token');
     const token = jwt.sign(
       { userId: user.id, email: user.email, role: user.role, hostId, driverId },
-      JWT_SECRET,
+      getJwtSecret(),
       { expiresIn: '7d' }
     );
 
@@ -189,27 +201,16 @@ router.get('/verify', async (req, res) => {
     const authHeader = req.headers['authorization'];
     const token = authHeader && authHeader.split(' ')[1];
 
-    console.log('Verify endpoint called:', {
-      hasAuthHeader: !!authHeader,
-      hasToken: !!token,
-      tokenPreview: token ? `${token.substring(0, 20)}...` : 'none'
-    });
-
     if (!token) {
-      console.log('No token provided in verify request');
       return res.status(401).json({ message: 'No token provided' });
     }
 
-    jwt.verify(token, JWT_SECRET, async (err, decoded) => {
+    jwt.verify(token, getJwtSecret(), async (err, decoded) => {
       if (err) {
-        console.error('JWT verification failed:', {
-          error: err.name,
-          message: err.message,
-          tokenPreview: token.substring(0, 20) + '...'
-        });
-        return res.status(403).json({ 
-          message: 'Invalid token',
-          error: err.name || 'JWTError'
+        console.error('JWT verification failed:', err.message);
+        return res.status(403).json({
+          message: 'Invalid or expired token',
+          error: err.name
         });
       }
 
@@ -221,10 +222,9 @@ router.get('/verify', async (req, res) => {
       }
 
       // Always fetch fresh host or driver information from database
-      // This ensures we have the latest data even if token is outdated
       let hostId = null;
       let driverId = null;
-      
+
       if (user.role === 'host') {
         const host = getHostByUserId(user.id);
         hostId = host ? host.id : null;
@@ -233,9 +233,6 @@ router.get('/verify', async (req, res) => {
         driverId = driver ? driver.id : null;
       }
 
-      // If hostId exists but wasn't in the token, we could optionally
-      // generate a new token with the updated hostId, but for now
-      // we'll just return it in the response
       res.json({
         valid: true,
         user: {

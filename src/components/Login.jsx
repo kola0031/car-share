@@ -24,20 +24,25 @@ const Login = () => {
     setError('');
     setLoading(true);
 
-    const result = await login(email, password);
-    
-    if (result.success) {
-      // Redirect based on user role
-      if (result.user?.role === 'driver') {
-        navigate('/driver/trips');
+    try {
+      const result = await login(email, password);
+
+      if (result.success) {
+        // Redirect based on user role
+        if (result.user?.role === 'driver') {
+          navigate('/driver/trips');
+        } else {
+          navigate('/dashboard');
+        }
       } else {
-        navigate('/dashboard');
+        setError(result.error || 'Login failed. Please check your credentials.');
       }
-    } else {
-      setError(result.error || 'Login failed');
+    } catch (err) {
+      setError('An unexpected error occurred. Please try again.');
+      console.error('Login submit error:', err);
+    } finally {
+      setLoading(false);
     }
-    
-    setLoading(false);
   };
 
   return (
@@ -49,7 +54,7 @@ const Login = () => {
         </div>
 
         {error && (
-          <div className="error-message">
+          <div className="error-message" role="alert">
             {error}
           </div>
         )}
@@ -65,6 +70,7 @@ const Login = () => {
               required
               placeholder="you@example.com"
               disabled={loading}
+              autoComplete="email"
             />
           </div>
 
@@ -78,11 +84,16 @@ const Login = () => {
               required
               placeholder="••••••••"
               disabled={loading}
+              autoComplete="current-password"
             />
           </div>
 
           <button type="submit" className="login-button" disabled={loading}>
-            {loading ? 'Signing in...' : 'Sign In'}
+            {loading ? (
+              <span className="loading-spinner">Signing in...</span>
+            ) : (
+              'Sign In'
+            )}
           </button>
         </form>
 

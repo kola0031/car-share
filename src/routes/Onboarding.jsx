@@ -12,7 +12,7 @@ const Onboarding = () => {
   const [initializing, setInitializing] = useState(true);
   const [error, setError] = useState('');
   const [hostId, setHostId] = useState(null);
-  
+
   const [formData, setFormData] = useState({
     companyName: '',
     parkMyShareLocation: 'Atlanta, GA',
@@ -24,7 +24,7 @@ const Onboarding = () => {
     const init = async () => {
       try {
         setError('');
-        
+
         // Check authentication
         if (!user) {
           setError('Please log in to continue.');
@@ -34,7 +34,7 @@ const Onboarding = () => {
 
         // Get hostId - try from user object first, then from API
         let currentHostId = user?.hostId;
-        
+
         if (!currentHostId && user?.id) {
           try {
             const host = await hostsAPI.getByUserId(user.id);
@@ -59,13 +59,13 @@ const Onboarding = () => {
         // Load host data to check status
         try {
           const host = await hostsAPI.getOne(currentHostId);
-          
+
           // If already completed, redirect
           if (host.onboardingStatus === 'completed') {
             navigate('/dashboard');
             return;
           }
-          
+
           // Pre-fill form if data exists
           if (host.companyName) {
             setFormData(prev => ({ ...prev, companyName: host.companyName }));
@@ -98,6 +98,16 @@ const Onboarding = () => {
   const handleComplete = async () => {
     if (!hostId) {
       setError('Host ID not found. Please refresh the page.');
+      return;
+    }
+
+    // Verify token exists before making request
+    const token = localStorage.getItem('token');
+    if (!token) {
+      console.error('Onboarding: No token found in localStorage');
+      setError('Session expired. Please log in again.');
+      // Optional: Redirect to login after a delay
+      setTimeout(() => navigate('/login'), 2000);
       return;
     }
 
@@ -164,11 +174,11 @@ const Onboarding = () => {
               <p className="onboarding-subtitle">Setup Required</p>
             </div>
             {error && (
-              <div className="error-message" style={{ 
-                padding: '16px', 
-                margin: '16px 0', 
-                backgroundColor: '#fee', 
-                color: '#c33', 
+              <div className="error-message" style={{
+                padding: '16px',
+                margin: '16px 0',
+                backgroundColor: '#fee',
+                color: '#c33',
                 borderRadius: '8px',
                 border: '1px solid #fcc',
               }}>
@@ -199,11 +209,11 @@ const Onboarding = () => {
           </div>
 
           {error && (
-            <div className="error-message" style={{ 
-              padding: '12px', 
-              margin: '16px 0', 
-              backgroundColor: '#fee', 
-              color: '#c33', 
+            <div className="error-message" style={{
+              padding: '12px',
+              margin: '16px 0',
+              backgroundColor: '#fee',
+              color: '#c33',
               borderRadius: '4px',
               border: '1px solid #fcc',
             }}>
@@ -216,7 +226,7 @@ const Onboarding = () => {
             <div className="step-form">
               <h2>Basic Information</h2>
               <p className="step-help">Tell us a bit about your business</p>
-              
+
               <div className="form-group">
                 <label htmlFor="companyName">Company/Fleet Name</label>
                 <input
