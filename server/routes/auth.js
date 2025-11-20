@@ -10,6 +10,9 @@ import { createDriver, getDriverByUserId } from '../database/drivers.js';
 const router = express.Router();
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
 
+// Log JWT_SECRET on startup (first 10 chars only for security)
+console.log('Auth routes initialized with JWT_SECRET:', JWT_SECRET ? `${JWT_SECRET.substring(0, 10)}...` : 'undefined');
+
 // Register (Host or Driver)
 router.post('/register', [
   body('email').isEmail().normalizeEmail(),
@@ -19,8 +22,15 @@ router.post('/register', [
   body('role').optional().isIn(['host', 'driver']),
 ], async (req, res) => {
   try {
+    // Debug logging
+    console.log('Registration request received:', {
+      body: req.body,
+      headers: req.headers['content-type']
+    });
+    
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
+      console.log('Validation errors:', errors.array());
       return res.status(400).json({ errors: errors.array() });
     }
 
@@ -82,6 +92,7 @@ router.post('/register', [
     }
 
     // Generate JWT
+    console.log('Signing registration token with JWT_SECRET:', JWT_SECRET ? `${JWT_SECRET.substring(0, 10)}...` : 'undefined');
     const token = jwt.sign(
       { userId: newUser.id, email: newUser.email, role: newUser.role, hostId, driverId },
       JWT_SECRET,
@@ -146,6 +157,7 @@ router.post('/login', [
     }
 
     // Generate JWT
+    console.log('Signing token with JWT_SECRET:', JWT_SECRET ? `${JWT_SECRET.substring(0, 10)}...` : 'undefined');
     const token = jwt.sign(
       { userId: user.id, email: user.email, role: user.role, hostId, driverId },
       JWT_SECRET,
@@ -177,13 +189,28 @@ router.get('/verify', async (req, res) => {
     const authHeader = req.headers['authorization'];
     const token = authHeader && authHeader.split(' ')[1];
 
+    console.log('Verify endpoint called:', {
+      hasAuthHeader: !!authHeader,
+      hasToken: !!token,
+      tokenPreview: token ? `${token.substring(0, 20)}...` : 'none'
+    });
+
     if (!token) {
+      console.log('No token provided in verify request');
       return res.status(401).json({ message: 'No token provided' });
     }
 
-    jwt.verify(token, JWT_SECRET, (err, decoded) => {
+    jwt.verify(token, JWT_SECRET, async (err, decoded) => {
       if (err) {
-        return res.status(403).json({ message: 'Invalid token' });
+        console.error('JWT verification failed:', {
+          error: err.name,
+          message: err.message,
+          tokenPreview: token.substring(0, 20) + '...'
+        });
+        return res.status(403).json({ 
+          message: 'Invalid token',
+          error: err.name || 'JWTError'
+        });
       }
 
       const users = getUsers();
@@ -193,7 +220,8 @@ router.get('/verify', async (req, res) => {
         return res.status(404).json({ message: 'User not found' });
       }
 
-      // Get host or driver information
+      // Always fetch fresh host or driver information from database
+      // This ensures we have the latest data even if token is outdated
       let hostId = null;
       let driverId = null;
       
@@ -205,6 +233,9 @@ router.get('/verify', async (req, res) => {
         driverId = driver ? driver.id : null;
       }
 
+      // If hostId exists but wasn't in the token, we could optionally
+      // generate a new token with the updated hostId, but for now
+      // we'll just return it in the response
       res.json({
         valid: true,
         user: {
