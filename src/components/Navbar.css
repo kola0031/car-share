@@ -32,8 +32,13 @@
 }
 
 @keyframes shimmer {
-  0% { left: -100%; }
-  100% { left: 100%; }
+  0% {
+    left: -100%;
+  }
+
+  100% {
+    left: 100%;
+  }
 }
 
 .navbar-container {
@@ -97,7 +102,7 @@
 .cta-button {
   background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
   color: white !important;
-  padding: 0.7rem 1.5rem;
+  padding: 0.9rem 2rem;
   border-radius: 8px;
   font-size: 0.9rem;
   white-space: nowrap;
@@ -112,10 +117,14 @@
   box-shadow: var(--shadow-glow);
 }
 
+.cta-button::after {
+  display: none;
+}
+
 .cta-button-secondary {
   background: rgba(255, 255, 255, 0.1);
   color: var(--text-primary) !important;
-  padding: 0.7rem 1.5rem;
+  padding: 0.9rem 2rem;
   border-radius: 8px;
   font-size: 0.9rem;
   white-space: nowrap;
@@ -129,6 +138,10 @@
   background: rgba(255, 255, 255, 0.15);
   border-color: var(--primary);
   transform: translateY(-2px);
+}
+
+.cta-button-secondary::after {
+  display: none;
 }
 
 .navbar-toggle {
@@ -179,4 +192,3 @@
     visibility: visible;
   }
 }
-

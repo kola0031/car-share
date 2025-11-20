@@ -14,9 +14,9 @@ const Navbar = () => {
         <div className="navbar-logo">
           <span className="logo-text">HostPilot</span>
         </div>
-        
+
         <div className={`navbar-menu ${isMenuOpen ? 'active' : ''}`}>
-          <a 
+          <a
             href="#features"
             onClick={(e) => {
               e.preventDefault();
@@ -29,7 +29,7 @@ const Navbar = () => {
           >
             Features
           </a>
-          <a 
+          <a
             href="#pricing"
             onClick={(e) => {
               e.preventDefault();
@@ -42,7 +42,7 @@ const Navbar = () => {
           >
             Pricing
           </a>
-          <a 
+          <a
             href="#faq"
             onClick={(e) => {
               e.preventDefault();
@@ -55,7 +55,7 @@ const Navbar = () => {
           >
             How It Works
           </a>
-          <a 
+          <a
             href="#footer"
             onClick={(e) => {
               e.preventDefault();
@@ -69,15 +69,15 @@ const Navbar = () => {
             <>
               {user?.role === 'driver' ? (
                 <>
-                  <Link 
-                    to="/bookings" 
+                  <Link
+                    to="/bookings"
                     className="login-link"
                     onClick={() => setIsMenuOpen(false)}
                   >
                     Book a Trip
                   </Link>
-                  <Link 
-                    to="/driver/trips" 
+                  <Link
+                    to="/driver/trips"
                     className="login-link"
                     onClick={() => setIsMenuOpen(false)}
                   >
@@ -85,16 +85,16 @@ const Navbar = () => {
                   </Link>
                 </>
               ) : (
-                <Link 
-                  to="/dashboard" 
+                <Link
+                  to="/dashboard"
                   className="login-link"
                   onClick={() => setIsMenuOpen(false)}
                 >
                   Dashboard
                 </Link>
               )}
-              <a 
-                href="#" 
+              <a
+                href="#"
                 className="login-link"
                 onClick={(e) => {
                   e.preventDefault();
@@ -108,15 +108,15 @@ const Navbar = () => {
             </>
           ) : (
             <>
-              <Link 
-                to="/bookings" 
+              <Link
+                to="/bookings"
                 className="login-link"
                 onClick={() => setIsMenuOpen(false)}
               >
                 Book a Car
               </Link>
-              <Link 
-                to="/login" 
+              <Link
+                to="/login"
                 className="login-link"
                 onClick={() => setIsMenuOpen(false)}
               >
@@ -124,15 +124,17 @@ const Navbar = () => {
               </Link>
             </>
           )}
-          <Link 
-            to="/register" 
-            className="cta-button"
-            onClick={() => setIsMenuOpen(false)}
-          >
-            GET STARTED
-          </Link>
-          <a 
-            href="#footer" 
+          {!isAuthenticated && (
+            <Link
+              to="/register"
+              className="cta-button"
+              onClick={() => setIsMenuOpen(false)}
+            >
+              GET STARTED
+            </Link>
+          )}
+          <a
+            href="#footer"
             className="cta-button-secondary"
             onClick={(e) => {
               e.preventDefault();
@@ -147,7 +149,7 @@ const Navbar = () => {
           </a>
         </div>
 
-        <button 
+        <button
           className="navbar-toggle"
           onClick={() => setIsMenuOpen(!isMenuOpen)}
           aria-label="Toggle menu"
@@ -157,7 +159,7 @@ const Navbar = () => {
           <span></span>
         </button>
       </div>
-      
+
       <div className="top-banner">
         Atlanta's leading tech-driven vehicle management platform
       </div>
