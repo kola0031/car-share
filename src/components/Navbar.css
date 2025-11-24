@@ -102,14 +102,19 @@
 .cta-button {
   background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
   color: white !important;
-  padding: 0.9rem 2rem;
-  border-radius: 8px;
+  padding: 1.2rem 4rem;
+  border-radius: var(--radius-md);
   font-size: 0.9rem;
   white-space: nowrap;
   font-weight: 600;
   transition: all 0.3s ease;
   box-shadow: var(--shadow-md);
   border: none;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .cta-button:hover {
@@ -121,17 +126,32 @@
   display: none;
 }
 
+/* Specific style for anchor tag buttons */
+a.cta-button {
+  padding: 1.2rem 4rem !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  text-decoration: none !important;
+  box-sizing: border-box !important;
+}
+
 .cta-button-secondary {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.05);
   color: var(--text-primary) !important;
-  padding: 0.9rem 2rem;
-  border-radius: 8px;
+  padding: 1.2rem 4rem;
+  border-radius: var(--radius-md);
   font-size: 0.9rem;
   white-space: nowrap;
   font-weight: 600;
   border: 1px solid var(--border-color);
   transition: all 0.3s ease;
   backdrop-filter: blur(10px);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .cta-button-secondary:hover {
@@ -142,6 +162,16 @@
 
 .cta-button-secondary::after {
   display: none;
+}
+
+/* Specific style for anchor tag secondary buttons */
+a.cta-button-secondary {
+  padding: 1.2rem 4rem !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  text-decoration: none !important;
+  box-sizing: border-box !important;
 }
 
 .navbar-toggle {

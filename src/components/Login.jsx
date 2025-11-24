@@ -49,6 +49,7 @@ const Login = () => {
     <div className="login-container">
       <div className="login-card">
         <div className="login-header">
+          <Link to="/" className="back-to-home">← Back to Home</Link>
           <h1 className="login-title">HostPilot</h1>
           <p className="login-subtitle">Welcome back! Sign in to your account</p>
         </div>

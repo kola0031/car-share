@@ -1,94 +1,66 @@
-import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
+import Host from '../models/Host.js';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-const HOSTS_FILE = path.join(__dirname, '../data/hosts.json');
-
-const dataDir = path.dirname(HOSTS_FILE);
-if (!fs.existsSync(dataDir)) {
-  fs.mkdirSync(dataDir, { recursive: true });
-}
-
-if (!fs.existsSync(HOSTS_FILE)) {
-  fs.writeFileSync(HOSTS_FILE, JSON.stringify([], null, 2));
-}
-
-export const getHosts = () => {
+export const getHosts = async () => {
   try {
-    const data = fs.readFileSync(HOSTS_FILE, 'utf8');
-    return JSON.parse(data);
+    return await Host.find();
   } catch (error) {
     console.error('Error reading hosts:', error);
     return [];
   }
 };
 
-export const saveHosts = (hosts) => {
+export const createHost = async (hostData) => {
   try {
-    fs.writeFileSync(HOSTS_FILE, JSON.stringify(hosts, null, 2));
+    const newHost = new Host({
+      ...hostData,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+    await newHost.save();
+    return newHost;
   } catch (error) {
-    console.error('Error saving hosts:', error);
+    console.error('Error creating host:', error);
     throw error;
   }
 };
 
-export const createHost = (hostData) => {
-  const hosts = getHosts();
-  const newHost = {
-    id: `host_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-    userId: hostData.userId, // Link to user account
-    companyName: hostData.companyName || '',
-    serviceTier: hostData.serviceTier || 'Basic', // Basic, Pro, Enterprise
-    subscriptionStatus: hostData.subscriptionStatus || 'active',
-    subscriptionStartDate: hostData.subscriptionStartDate || new Date().toISOString(),
-    monthlySubscriptionFee: hostData.monthlySubscriptionFee || 299,
-    fleetSize: 0,
-    totalRevenue: 0,
-    revenueUptime: 0, // Percentage
-    onboardingStatus: hostData.onboardingStatus || 'pending', // pending, in-progress, completed
-    hostPilotIntegrationId: hostData.hostPilotIntegrationId || null,
-    parkMyShareLocation: hostData.parkMyShareLocation || null,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-    ...hostData,
-  };
-  hosts.push(newHost);
-  saveHosts(hosts);
-  return newHost;
-};
-
-export const getHostById = (hostId) => {
-  const hosts = getHosts();
-  return hosts.find(h => h.id === hostId);
-};
-
-export const getHostByUserId = (userId) => {
-  const hosts = getHosts();
-  return hosts.find(h => h.userId === userId);
-};
-
-export const updateHost = (hostId, updates) => {
-  const hosts = getHosts();
-  const index = hosts.findIndex(h => h.id === hostId);
-  if (index !== -1) {
-    hosts[index] = { 
-      ...hosts[index], 
-      ...updates, 
-      updatedAt: new Date().toISOString() 
-    };
-    saveHosts(hosts);
-    return hosts[index];
+export const getHostById = async (hostId) => {
+  try {
+    return await Host.findById(hostId);
+  } catch (error) {
+    console.error('Error finding host by ID:', error);
+    return null;
   }
-  return null;
 };
 
-export const deleteHost = (hostId) => {
-  const hosts = getHosts();
-  const filtered = hosts.filter(h => h.id !== hostId);
-  saveHosts(filtered);
-  return filtered.length !== hosts.length;
+export const getHostByUserId = async (userId) => {
+  try {
+    return await Host.findOne({ userId });
+  } catch (error) {
+    console.error('Error finding host by user ID:', error);
+    return null;
+  }
 };
 
+export const updateHost = async (hostId, updates) => {
+  try {
+    const updatedHost = await Host.findByIdAndUpdate(
+      hostId,
+      { ...updates, updatedAt: new Date() },
+      { new: true, runValidators: true }
+    );
+    return updatedHost;
+  } catch (error) {
+    console.error('Error updating host:', error);
+    throw error;
+  }
+};
+
+export const deleteHost = async (hostId) => {
+  try {
+    await Host.findByIdAndDelete(hostId);
+  } catch (error) {
+    console.error('Error deleting host:', error);
+    throw error;
+  }
+};

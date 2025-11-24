@@ -1,12 +1,13 @@
 import express from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import crypto from 'crypto';
 import { body, validationResult } from 'express-validator';
-import { getUsers, saveUsers, createUser, getUserByVerificationToken, updateUser } from '../database/users.js';
+import { createUser, getUserByEmail, getUserById, getUserByVerificationToken, updateUser } from '../database/users.js';
 import { createHost, getHostByUserId } from '../database/hosts.js';
 import { createSubscription } from '../database/subscriptions.js';
 import { createDriver, getDriverByUserId } from '../database/drivers.js';
-import { sendVerificationEmail, sendWelcomeEmail } from '../services/email.js';
+import { sendVerificationEmail } from '../services/email.js';
 
 const router = express.Router();
 
@@ -57,10 +58,9 @@ router.post('/register', registerValidation, async (req, res) => {
 
     const { email, password, name, companyName, role = 'host' } = req.body;
 
-    const users = getUsers();
-
     // Check if user already exists
-    if (users.find(u => u.email === email)) {
+    const existingUser = await getUserByEmail(email);
+    if (existingUser) {
       return res.status(409).json({ message: 'User with this email already exists' });
     }
 
@@ -68,54 +68,62 @@ router.post('/register', registerValidation, async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, 10);
 
     // Create user
-    const newUser = createUser({
+    const newUser = await createUser({
       email,
       password: hashedPassword,
       name,
-      companyName: companyName || '',
       role: role,
-      createdAt: new Date().toISOString(),
+      emailVerified: false,
+      verificationToken: crypto.randomBytes(32).toString('hex'),
     });
-
-    users.push(newUser);
-    saveUsers(users);
 
     let hostId = null;
     let driverId = null;
 
     if (role === 'host') {
       // Create host profile
-      const host = createHost({
-        userId: newUser.id,
+      const host = await createHost({
+        userId: newUser._id.toString(),
         companyName: companyName || name + "'s Fleet",
-        serviceTier: 'Basic',
-        subscriptionStatus: 'active',
-        monthlySubscriptionFee: 299,
+        serviceTier: 'none',
+        subscriptionStatus: 'pending',
+        monthlySubscriptionFee: 0,
         onboardingStatus: 'pending',
       });
-      hostId = host.id;
+      hostId = host._id.toString();
 
-      // Create subscription
-      createSubscription({
-        hostId: host.id,
-        serviceTier: 'Basic',
-        status: 'active',
-      });
+      // Update user with hostId
+      await updateUser(newUser._id, { hostId });
     } else if (role === 'driver') {
       // Create driver profile
-      const driver = createDriver({
-        userId: newUser.id,
-        email: newUser.email,
-        name: newUser.name,
+      const driver = await createDriver({
+        userId: newUser._id.toString(),
         verificationStatus: 'pending',
       });
-      driverId = driver.id;
+      driverId = driver._id.toString();
+
+      // Update user with driverId
+      await updateUser(newUser._id, { driverId });
+    }
+
+    // Send verification email
+    try {
+      await sendVerificationEmail(newUser.email, newUser.verificationToken);
+    } catch (emailError) {
+      console.error('Failed to send verification email:', emailError);
+      // Continue with registration even if email fails
     }
 
     // Generate JWT
     console.log('Signing registration token');
     const token = jwt.sign(
-      { userId: newUser.id, email: newUser.email, role: newUser.role, hostId, driverId },
+      {
+        userId: newUser._id.toString(),
+        email: newUser.email,
+        role: newUser.role,
+        hostId,
+        driverId
+      },
       getJwtSecret(),
       { expiresIn: '7d' }
     );
@@ -124,13 +132,13 @@ router.post('/register', registerValidation, async (req, res) => {
       message: 'User registered successfully',
       token,
       user: {
-        id: newUser.id,
+        id: newUser._id.toString(),
         email: newUser.email,
         name: newUser.name,
-        companyName: newUser.companyName,
         role: newUser.role,
         hostId,
         driverId,
+        emailVerified: newUser.emailVerified,
       },
     });
   } catch (error) {
@@ -144,8 +152,7 @@ router.post('/login', loginValidation, async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    const users = getUsers();
-    const user = users.find(u => u.email === email);
+    const user = await getUserByEmail(email);
 
     if (!user) {
       return res.status(401).json({ message: 'Invalid email or password' });
@@ -158,21 +165,27 @@ router.post('/login', loginValidation, async (req, res) => {
     }
 
     // Get host or driver information
-    let hostId = null;
-    let driverId = null;
+    let hostId = user.hostId || null;
+    let driverId = user.driverId || null;
 
-    if (user.role === 'host') {
-      const host = getHostByUserId(user.id);
-      hostId = host ? host.id : null;
-    } else if (user.role === 'driver') {
-      const driver = getDriverByUserId(user.id);
-      driverId = driver ? driver.id : null;
+    if (user.role === 'host' && !hostId) {
+      const host = await getHostByUserId(user._id.toString());
+      hostId = host ? host._id.toString() : null;
+    } else if (user.role === 'driver' && !driverId) {
+      const driver = await getDriverByUserId(user._id.toString());
+      driverId = driver ? driver._id.toString() : null;
     }
 
     // Generate JWT
     console.log('Signing login token');
     const token = jwt.sign(
-      { userId: user.id, email: user.email, role: user.role, hostId, driverId },
+      {
+        userId: user._id.toString(),
+        email: user.email,
+        role: user.role,
+        hostId,
+        driverId
+      },
       getJwtSecret(),
       { expiresIn: '7d' }
     );
@@ -181,13 +194,13 @@ router.post('/login', loginValidation, async (req, res) => {
       message: 'Login successful',
       token,
       user: {
-        id: user.id,
+        id: user._id.toString(),
         email: user.email,
         name: user.name,
-        companyName: user.companyName,
         role: user.role,
         hostId,
         driverId,
+        emailVerified: user.emailVerified,
       },
     });
   } catch (error) {
@@ -215,41 +228,40 @@ router.get('/verify', async (req, res) => {
         });
       }
 
-      const users = getUsers();
-      const user = users.find(u => u.id === decoded.userId);
+      const user = await getUserById(decoded.userId);
 
       if (!user) {
         return res.status(404).json({ message: 'User not found' });
       }
 
       // Always fetch fresh host or driver information from database
-      let hostId = null;
-      let driverId = null;
+      let hostId = user.hostId || null;
+      let driverId = user.driverId || null;
 
-      if (user.role === 'host') {
-        const host = getHostByUserId(user.id);
-        hostId = host ? host.id : null;
-      } else if (user.role === 'driver') {
-        const driver = getDriverByUserId(user.id);
-        driverId = driver ? driver.id : null;
+      if (user.role === 'host' && !hostId) {
+        const host = await getHostByUserId(user._id.toString());
+        hostId = host ? host._id.toString() : null;
+      } else if (user.role === 'driver' && !driverId) {
+        const driver = await getDriverByUserId(user._id.toString());
+        driverId = driver ? driver._id.toString() : null;
       }
 
       res.json({
         valid: true,
         user: {
-          id: user.id,
+          id: user._id.toString(),
           email: user.email,
           name: user.name,
-          companyName: user.companyName,
           role: user.role,
           hostId,
           driverId,
+          emailVerified: user.emailVerified,
         },
       });
     });
   } catch (error) {
-    console.error('Verify error:', error);
-    res.status(500).json({ message: 'Server error' });
+    console.error('Verification error:', error);
+    res.status(500).json({ message: 'Server error during verification' });
   }
 });
 
@@ -258,7 +270,7 @@ router.get('/verify-email/:token', async (req, res) => {
   try {
     const { token } = req.params;
 
-    const user = getUserByVerificationToken(token);
+    const user = await getUserByVerificationToken(token);
 
     if (!user) {
       return res.status(400).json({ message: 'Invalid or expired verification token' });
@@ -269,7 +281,7 @@ router.get('/verify-email/:token', async (req, res) => {
     }
 
     // Update user as verified
-    const updatedUser = updateUser(user.id, {
+    const updatedUser = await updateUser(user._id, {
       emailVerified: true,
       verificationToken: null,
     });
@@ -277,7 +289,7 @@ router.get('/verify-email/:token', async (req, res) => {
     res.json({
       message: 'Email verified successfully',
       user: {
-        id: updatedUser.id,
+        id: updatedUser._id.toString(),
         email: updatedUser.email,
         name: updatedUser.name,
         emailVerified: updatedUser.emailVerified,
@@ -297,31 +309,31 @@ router.post('/resend-verification', [
   try {
     const { email } = req.body;
 
-    const users = getUsers();
-    const user = users.find(u => u.email === email);
+    const user = await getUserByEmail(email);
 
     if (!user) {
-      // Don't reveal if user exists or not
-      return res.json({ message: 'If the email exists, a verification link has been sent' });
+      return res.status(404).json({ message: 'User not found' });
     }
 
     if (user.emailVerified) {
-      return res.status(400).json({ message: 'Email already verified' });
+      return res.status(200).json({ message: 'Email already verified' });
+    }
+
+    // Generate new verification token if needed
+    if (!user.verificationToken) {
+      const newToken = crypto.randomBytes(32).toString('hex');
+      await updateUser(user._id, { verificationToken: newToken });
+      user.verificationToken = newToken;
     }
 
     // Send verification email
-    try {
-      await sendVerificationEmail(user.email, user.name, user.verificationToken);
-      res.json({ message: 'Verification email sent' });
-    } catch (emailError) {
-      console.error('Error sending verification email:', emailError);
-      res.status(500).json({ message: 'Failed to send verification email' });
-    }
+    await sendVerificationEmail(user.email, user.verificationToken);
+
+    res.json({ message: 'Verification email sent successfully' });
   } catch (error) {
     console.error('Resend verification error:', error);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: 'Server error while resending verification' });
   }
 });
 
 export default router;
-

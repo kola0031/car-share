@@ -66,6 +66,7 @@ const Register = () => {
     <div className="register-container">
       <div className="register-card">
         <div className="register-header">
+          <Link to="/" className="back-to-home">← Back to Home</Link>
           <h1 className="register-title">HostPilot</h1>
           <p className="register-subtitle">Create your account to get started</p>
           <div className="role-selector">

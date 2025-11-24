@@ -1,93 +1,106 @@
-import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
+import Vehicle from '../models/Vehicle.js';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-const VEHICLES_FILE = path.join(__dirname, '../data/vehicles.json');
-
-const dataDir = path.dirname(VEHICLES_FILE);
-if (!fs.existsSync(dataDir)) {
-  fs.mkdirSync(dataDir, { recursive: true });
-}
-
-if (!fs.existsSync(VEHICLES_FILE)) {
-  fs.writeFileSync(VEHICLES_FILE, JSON.stringify([], null, 2));
-}
-
-export const getVehicles = () => {
+export const getVehicles = async () => {
   try {
-    const data = fs.readFileSync(VEHICLES_FILE, 'utf8');
-    return JSON.parse(data);
+    return await Vehicle.find();
   } catch (error) {
     console.error('Error reading vehicles:', error);
     return [];
   }
 };
 
-export const saveVehicles = (vehicles) => {
+export const createVehicle = async (vehicleData) => {
   try {
-    fs.writeFileSync(VEHICLES_FILE, JSON.stringify(vehicles, null, 2));
+    const newVehicle = new Vehicle({
+      ...vehicleData,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+    await newVehicle.save();
+    return newVehicle;
   } catch (error) {
-    console.error('Error saving vehicles:', error);
+    console.error('Error creating vehicle:', error);
     throw error;
   }
 };
 
-export const createVehicle = (vehicleData) => {
-  const vehicles = getVehicles();
-  const newVehicle = {
-    id: `vehicle_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-    hostId: vehicleData.hostId,
-    make: vehicleData.make || '',
-    model: vehicleData.model || '',
-    year: vehicleData.year || null,
-    vin: vehicleData.vin || '',
-    licensePlate: vehicleData.licensePlate || '',
-    color: vehicleData.color || '',
-    mileage: vehicleData.mileage || 0,
-    status: vehicleData.status || 'pending', // pending, available, rented, maintenance, inactive
-    dailyRate: vehicleData.dailyRate || 0,
-    photos: vehicleData.photos || [],
-    documents: {
-      registration: vehicleData.documents?.registration || null,
-      insurance: vehicleData.documents?.insurance || null,
-      inspection: vehicleData.documents?.inspection || null,
-    },
-    verificationStatus: vehicleData.verificationStatus || 'pending', // pending, verified, rejected
-    parkMyShareLocation: vehicleData.parkMyShareLocation || null,
-    maintenancePlan: vehicleData.maintenancePlan || 'standard', // standard, premium
-    features: vehicleData.features || [], // GPS, Bluetooth, etc.
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-    ...vehicleData,
-  };
-  vehicles.push(newVehicle);
-  saveVehicles(vehicles);
-  return newVehicle;
-};
-
-export const getVehicleById = (vehicleId) => {
-  const vehicles = getVehicles();
-  return vehicles.find(v => v.id === vehicleId);
-};
-
-export const updateVehicle = (vehicleId, updates) => {
-  const vehicles = getVehicles();
-  const index = vehicles.findIndex(v => v.id === vehicleId);
-  if (index !== -1) {
-    vehicles[index] = { ...vehicles[index], ...updates, updatedAt: new Date().toISOString() };
-    saveVehicles(vehicles);
-    return vehicles[index];
+export const getVehicleById = async (vehicleId) => {
+  try {
+    return await Vehicle.findById(vehicleId);
+  } catch (error) {
+    console.error('Error finding vehicle by ID:', error);
+    return null;
   }
-  return null;
 };
 
-export const deleteVehicle = (vehicleId) => {
-  const vehicles = getVehicles();
-  const filtered = vehicles.filter(v => v.id !== vehicleId);
-  saveVehicles(filtered);
-  return filtered.length !== vehicles.length;
+export const getVehiclesByHostId = async (hostId) => {
+  try {
+    return await Vehicle.find({ hostId });
+  } catch (error) {
+    console.error('Error finding vehicles by host ID:', error);
+    return [];
+  }
 };
 
+export const updateVehicle = async (vehicleId, updates) => {
+  try {
+    const updatedVehicle = await Vehicle.findByIdAndUpdate(
+      vehicleId,
+      { ...updates, updatedAt: new Date() },
+      { new: true, runValidators: true }
+    );
+    return updatedVehicle;
+  } catch (error) {
+    console.error('Error updating vehicle:', error);
+    throw error;
+  }
+};
+
+export const deleteVehicle = async (vehicleId) => {
+  try {
+    await Vehicle.findByIdAndDelete(vehicleId);
+  } catch (error) {
+    console.error('Error deleting vehicle:', error);
+    throw error;
+  }
+};
+
+export const addVehicleDocument = async (vehicleId, documentData) => {
+  try {
+    const vehicle = await Vehicle.findById(vehicleId);
+    if (!vehicle) {
+      throw new Error('Vehicle not found');
+    }
+
+    vehicle.documents.push({
+      ...documentData,
+      uploadedAt: new Date(),
+    });
+
+    await vehicle.save();
+    return vehicle;
+  } catch (error) {
+    console.error('Error adding vehicle document:', error);
+    throw error;
+  }
+};
+
+export const addVehicleImage = async (vehicleId, imageData) => {
+  try {
+    const vehicle = await Vehicle.findById(vehicleId);
+    if (!vehicle) {
+      throw new Error('Vehicle not found');
+    }
+
+    vehicle.images.push({
+      ...imageData,
+      uploadedAt: new Date(),
+    });
+
+    await vehicle.save();
+    return vehicle;
+  } catch (error) {
+    console.error('Error adding vehicle image:', error);
+    throw error;
+  }
+};

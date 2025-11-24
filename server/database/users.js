@@ -1,74 +1,75 @@
-import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
+import User from '../models/User.js';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-const USERS_FILE = path.join(__dirname, '../data/users.json');
-
-// Ensure data directory exists
-const dataDir = path.dirname(USERS_FILE);
-if (!fs.existsSync(dataDir)) {
-  fs.mkdirSync(dataDir, { recursive: true });
-}
-
-// Initialize users file if it doesn't exist
-if (!fs.existsSync(USERS_FILE)) {
-  fs.writeFileSync(USERS_FILE, JSON.stringify([], null, 2));
-}
-
-export const getUsers = () => {
+export const getUsers = async () => {
   try {
-    const data = fs.readFileSync(USERS_FILE, 'utf8');
-    return JSON.parse(data);
+    return await User.find();
   } catch (error) {
     console.error('Error reading users:', error);
     return [];
   }
 };
 
-export const saveUsers = (users) => {
+export const createUser = async (userData) => {
   try {
-    fs.writeFileSync(USERS_FILE, JSON.stringify(users, null, 2));
+    const newUser = new User({
+      ...userData,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+    await newUser.save();
+    return newUser;
   } catch (error) {
-    console.error('Error saving users:', error);
+    console.error('Error creating user:', error);
     throw error;
   }
 };
 
-export const createUser = (userData) => {
-  const users = getUsers();
-  const newUser = {
-    id: `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-    ...userData,
-  };
-  return newUser;
-};
-
-export const getUserById = (userId) => {
-  const users = getUsers();
-  return users.find(u => u.id === userId);
-};
-
-export const updateUser = (userId, updates) => {
-  const users = getUsers();
-  const index = users.findIndex(u => u.id === userId);
-  if (index !== -1) {
-    users[index] = { ...users[index], ...updates };
-    saveUsers(users);
-    return users[index];
+export const getUserById = async (userId) => {
+  try {
+    return await User.findOne({ _id: userId });
+  } catch (error) {
+    console.error('Error finding user by ID:', error);
+    return null;
   }
-  return null;
 };
 
-export const getUserByEmail = (email) => {
-  const users = getUsers();
-  return users.find(u => u.email === email);
+export const getUserByEmail = async (email) => {
+  try {
+    return await User.findOne({ email: email.toLowerCase() });
+  } catch (error) {
+    console.error('Error finding user by email:', error);
+    return null;
+  }
 };
 
-export const getUserByVerificationToken = (token) => {
-  const users = getUsers();
-  return users.find(u => u.verificationToken === token);
+export const getUserByVerificationToken = async (token) => {
+  try {
+    return await User.findOne({ verificationToken: token });
+  } catch (error) {
+    console.error('Error finding user by verification token:', error);
+    return null;
+  }
 };
 
+export const updateUser = async (userId, updates) => {
+  try {
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      { ...updates, updatedAt: new Date() },
+      { new: true, runValidators: true }
+    );
+    return updatedUser;
+  } catch (error) {
+    console.error('Error updating user:', error);
+    throw error;
+  }
+};
+
+export const deleteUser = async (userId) => {
+  try {
+    await User.findByIdAndDelete(userId);
+  } catch (error) {
+    console.error('Error deleting user:', error);
+    throw error;
+  }
+};

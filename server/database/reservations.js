@@ -1,75 +1,95 @@
-import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
+import Reservation from '../models/Reservation.js';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-const RESERVATIONS_FILE = path.join(__dirname, '../data/reservations.json');
-
-const dataDir = path.dirname(RESERVATIONS_FILE);
-if (!fs.existsSync(dataDir)) {
-  fs.mkdirSync(dataDir, { recursive: true });
-}
-
-if (!fs.existsSync(RESERVATIONS_FILE)) {
-  fs.writeFileSync(RESERVATIONS_FILE, JSON.stringify([], null, 2));
-}
-
-export const getReservations = () => {
+export const getReservations = async () => {
   try {
-    const data = fs.readFileSync(RESERVATIONS_FILE, 'utf8');
-    return JSON.parse(data);
+    return await Reservation.find();
   } catch (error) {
     console.error('Error reading reservations:', error);
     return [];
   }
 };
 
-export const saveReservations = (reservations) => {
+export const createReservation = async (reservationData) => {
   try {
-    fs.writeFileSync(RESERVATIONS_FILE, JSON.stringify(reservations, null, 2));
+    const newReservation = new Reservation({
+      ...reservationData,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+    await newReservation.save();
+    return newReservation;
   } catch (error) {
-    console.error('Error saving reservations:', error);
+    console.error('Error creating reservation:', error);
     throw error;
   }
 };
 
-export const createReservation = (reservationData) => {
-  const reservations = getReservations();
-  const newReservation = {
-    id: `res_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-    status: 'pending',
-    createdAt: new Date().toISOString(),
-    ...reservationData,
-  };
-  return newReservation;
-};
-
-export const getReservationById = (reservationId) => {
-  const reservations = getReservations();
-  return reservations.find(r => r.id === reservationId);
-};
-
-export const updateReservation = (reservationId, updates) => {
-  const reservations = getReservations();
-  const index = reservations.findIndex(r => r.id === reservationId);
-  if (index !== -1) {
-    reservations[index] = { 
-      ...reservations[index], 
-      ...updates, 
-      updatedAt: new Date().toISOString() 
-    };
-    saveReservations(reservations);
-    return reservations[index];
+export const getReservationById = async (reservationId) => {
+  try {
+    return await Reservation.findById(reservationId);
+  } catch (error) {
+    console.error('Error finding reservation by ID:', error);
+    return null;
   }
-  return null;
 };
 
-export const deleteReservation = (reservationId) => {
-  const reservations = getReservations();
-  const filtered = reservations.filter(r => r.id !== reservationId);
-  saveReservations(filtered);
-  return filtered.length !== reservations.length;
+export const getReservationsByHostId = async (hostId) => {
+  try {
+    return await Reservation.find({ hostId }).sort({ createdAt: -1 });
+  } catch (error) {
+    console.error('Error finding reservations by host ID:', error);
+    return [];
+  }
 };
 
+export const getReservationsByDriverId = async (driverId) => {
+  try {
+    return await Reservation.find({ driverId }).sort({ createdAt: -1 });
+  } catch (error) {
+    console.error('Error finding reservations by driver ID:', error);
+    return [];
+  }
+};
+
+export const getReservationsByVehicleId = async (vehicleId) => {
+  try {
+    return await Reservation.find({ vehicleId }).sort({ startDate: 1 });
+  } catch (error) {
+    console.error('Error finding reservations by vehicle ID:', error);
+    return [];
+  }
+};
+
+export const updateReservation = async (reservationId, updates) => {
+  try {
+    const updatedReservation = await Reservation.findByIdAndUpdate(
+      reservationId,
+      { ...updates, updatedAt: new Date() },
+      { new: true, runValidators: true }
+    );
+    return updatedReservation;
+  } catch (error) {
+    console.error('Error updating reservation:', error);
+    throw error;
+  }
+};
+
+export const deleteReservation = async (reservationId) => {
+  try {
+    await Reservation.findByIdAndDelete(reservationId);
+  } catch (error) {
+    console.error('Error deleting reservation:', error);
+    throw error;
+  }
+};
+
+export const getActiveReservations = async () => {
+  try {
+    return await Reservation.find({
+      status: { $in: ['confirmed', 'active'] }
+    }).sort({ startDate: 1 });
+  } catch (error) {
+    console.error('Error finding active reservations:', error);
+    return [];
+  }
+};

@@ -5,7 +5,7 @@
   justify-content: center;
   padding: 2rem;
   background: var(--bg-primary);
-  background-image: 
+  background-image:
     radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.1) 0px, transparent 50%),
     radial-gradient(at 100% 0%, rgba(139, 92, 246, 0.1) 0px, transparent 50%),
     radial-gradient(at 100% 100%, rgba(6, 182, 212, 0.1) 0px, transparent 50%),
@@ -55,6 +55,23 @@
 .login-subtitle {
   color: var(--text-secondary);
   font-size: 1rem;
+}
+
+.back-to-home {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--text-secondary);
+  text-decoration: none;
+  font-size: 0.9rem;
+  font-weight: 500;
+  margin-bottom: 1.5rem;
+  transition: all 0.3s ease;
+}
+
+.back-to-home:hover {
+  color: var(--primary);
+  transform: translateX(-4px);
 }
 
 .login-form {
@@ -168,4 +185,3 @@
     font-size: 2rem;
   }
 }
-
