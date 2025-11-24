@@ -11,6 +11,8 @@ import {
   reservationsAPI
 } from '../utils/api';
 import ProtectedRoute from '../components/ProtectedRoute';
+import FleetManager from '../components/FleetManager';
+import FleetDetails from '../components/FleetDetails';
 import './Dashboard.css';
 
 const Dashboard = () => {
@@ -25,6 +27,7 @@ const Dashboard = () => {
   const [recentReservations, setRecentReservations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('overview');
+  const [selectedFleet, setSelectedFleet] = useState(null);
 
   useEffect(() => {
     if (user?.hostId) {
@@ -113,7 +116,7 @@ const Dashboard = () => {
   };
 
   const formatPercentage = (value) => {
-    return `${(value || 0).toFixed(1)}%`;
+    return `${(value || 0).toFixed(1)}% `;
   };
 
   if (loading) {
@@ -134,7 +137,7 @@ const Dashboard = () => {
             <div>
               <h1 className="dashboard-title">HostPilot Portal</h1>
               <p className="dashboard-subtitle">
-                Welcome back, {user?.name || 'Host'}! {hostData?.host?.companyName && `• ${hostData.host.companyName}`}
+                Welcome back, {user?.name || 'Host'}! {hostData?.host?.companyName && `• ${hostData.host.companyName} `}
               </p>
             </div>
             <button onClick={logout} className="logout-button">
@@ -146,31 +149,31 @@ const Dashboard = () => {
         <div className="dashboard-content">
           <div className="dashboard-tabs">
             <button
-              className={`tab ${activeTab === 'overview' ? 'active' : ''}`}
+              className={`tab ${activeTab === 'overview' ? 'active' : ''} `}
               onClick={() => setActiveTab('overview')}
             >
               Overview
             </button>
             <button
-              className={`tab ${activeTab === 'performance' ? 'active' : ''}`}
+              className={`tab ${activeTab === 'performance' ? 'active' : ''} `}
               onClick={() => setActiveTab('performance')}
             >
               Performance
             </button>
             <button
-              className={`tab ${activeTab === 'fleet' ? 'active' : ''}`}
+              className={`tab ${activeTab === 'fleet' ? 'active' : ''} `}
               onClick={() => setActiveTab('fleet')}
             >
               Fleet
             </button>
             <button
-              className={`tab ${activeTab === 'subscription' ? 'active' : ''}`}
+              className={`tab ${activeTab === 'subscription' ? 'active' : ''} `}
               onClick={() => setActiveTab('subscription')}
             >
               Subscription
             </button>
             <button
-              className={`tab ${activeTab === 'tickets' ? 'active' : ''}`}
+              className={`tab ${activeTab === 'tickets' ? 'active' : ''} `}
               onClick={() => setActiveTab('tickets')}
             >
               Tickets
@@ -237,7 +240,7 @@ const Dashboard = () => {
                     <h3>Current Plan: {subscription.serviceTier}</h3>
                     <p>{formatCurrency(subscription.monthlyFee)}/month • Next billing: {formatDate(subscription.nextBillingDate)}</p>
                   </div>
-                  <span className={`subscription-status ${subscription.status}`}>
+                  <span className={`subscription - status ${subscription.status} `}>
                     {subscription.status}
                   </span>
                 </div>
@@ -259,7 +262,7 @@ const Dashboard = () => {
                             </p>
                           </div>
                           <div className="reservation-status">
-                            <span className={`status-badge ${reservation.status}`}>
+                            <span className={`status - badge ${reservation.status} `}>
                               {reservation.status}
                             </span>
                             {reservation.totalAmount && (
@@ -287,7 +290,7 @@ const Dashboard = () => {
                             <p className="ticket-type">{ticket.type.replace('_', ' ')}</p>
                             <p className="ticket-date">{formatDate(ticket.createdAt)}</p>
                           </div>
-                          <span className={`ticket-status ${ticket.status}`}>
+                          <span className={`ticket - status ${ticket.status} `}>
                             {ticket.status}
                           </span>
                         </div>
@@ -359,30 +362,38 @@ const Dashboard = () => {
           {activeTab === 'fleet' && (
             <div className="dashboard-section">
               <h2 className="section-title">Fleet Management</h2>
+
+              <FleetManager
+                hostId={user?.hostId}
+                onFleetCreated={() => loadHostPortalData()}
+              />
+
               {fleets.length > 0 ? (
                 <div className="fleets-grid">
                   {fleets.map((fleet) => (
-                    <div key={fleet.id} className="fleet-card">
+                    <div
+                      key={fleet.id}
+                      className="fleet-card"
+                      onClick={() => setSelectedFleet(fleet.id)}
+                      style={{ cursor: 'pointer' }}
+                    >
                       <h3>{fleet.name}</h3>
+                      <p className="fleet-description">{fleet.description || 'No description'}</p>
                       <div className="fleet-metrics">
                         <div className="fleet-metric">
                           <span>Vehicles:</span>
-                          <strong>{fleet.totalVehicles || 0}</strong>
+                          <strong>{fleet.vehicleCount || 0}</strong>
                         </div>
                         <div className="fleet-metric">
-                          <span>Utilization:</span>
-                          <strong>{formatPercentage(fleet.utilizationRate)}</strong>
-                        </div>
-                        <div className="fleet-metric">
-                          <span>Avg Daily Revenue:</span>
-                          <strong>{formatCurrency(fleet.averageDailyRevenue)}</strong>
+                          <span>Status:</span>
+                          <strong className={`status - ${fleet.status} `}>{fleet.status}</strong>
                         </div>
                       </div>
                     </div>
                   ))}
                 </div>
               ) : (
-                <p className="empty-state">No fleets created yet. Create your first fleet to get started.</p>
+                <p className="empty-state">No fleets created yet. Use the button above to create your first fleet.</p>
               )}
 
               <div className="vehicles-section">
@@ -393,7 +404,7 @@ const Dashboard = () => {
                       <div key={vehicle.id} className="vehicle-card">
                         <h4>{vehicle.make} {vehicle.model}</h4>
                         <p className="vehicle-year">{vehicle.year}</p>
-                        <span className={`vehicle-status ${vehicle.status}`}>
+                        <span className={`vehicle - status ${vehicle.status} `}>
                           {vehicle.status || 'available'}
                         </span>
                       </div>
@@ -403,6 +414,14 @@ const Dashboard = () => {
                   <p className="empty-state">No vehicles added yet</p>
                 )}
               </div>
+
+              {selectedFleet && (
+                <FleetDetails
+                  fleetId={selectedFleet}
+                  onClose={() => setSelectedFleet(null)}
+                  onUpdate={() => loadHostPortalData()}
+                />
+              )}
             </div>
           )}
 
@@ -413,7 +432,7 @@ const Dashboard = () => {
                 <div className="subscription-card">
                   <div className="subscription-header">
                     <h3>{subscription.serviceTier} Plan</h3>
-                    <span className={`subscription-status ${subscription.status}`}>
+                    <span className={`subscription - status ${subscription.status} `}>
                       {subscription.status}
                     </span>
                   </div>
@@ -449,14 +468,14 @@ const Dashboard = () => {
                     <div key={ticket.id} className="ticket-card-full">
                       <div className="ticket-header">
                         <h4>{ticket.title || 'Untitled Ticket'}</h4>
-                        <span className={`ticket-priority ${ticket.priority}`}>
+                        <span className={`ticket - priority ${ticket.priority} `}>
                           {ticket.priority}
                         </span>
                       </div>
                       <p className="ticket-description">{ticket.description || 'No description'}</p>
                       <div className="ticket-footer">
                         <span className="ticket-type">{ticket.type.replace('_', ' ')}</span>
-                        <span className={`ticket-status ${ticket.status}`}>
+                        <span className={`ticket - status ${ticket.status} `}>
                           {ticket.status}
                         </span>
                         <span className="ticket-date">{formatDate(ticket.createdAt)}</span>

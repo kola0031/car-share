@@ -293,6 +293,12 @@ export const fleetsAPI = {
   delete: (id) => request(`/fleets/${id}`, {
     method: 'DELETE',
   }),
+  addVehicle: (fleetId, vehicleId) => request(`/fleets/${fleetId}/vehicles/${vehicleId}`, {
+    method: 'POST',
+  }),
+  removeVehicle: (fleetId, vehicleId) => request(`/fleets/${fleetId}/vehicles/${vehicleId}`, {
+    method: 'DELETE',
+  }),
 };
 
 // Subscriptions API
