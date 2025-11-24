@@ -1,7 +1,7 @@
 .dashboard {
   min-height: 100vh;
   background: var(--bg-primary);
-  background-image: 
+  background-image:
     radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.1) 0px, transparent 50%),
     radial-gradient(at 100% 0%, rgba(139, 92, 246, 0.1) 0px, transparent 50%),
     radial-gradient(at 100% 100%, rgba(6, 182, 212, 0.1) 0px, transparent 50%),
@@ -755,63 +755,192 @@
   color: var(--text-primary);
   font-size: 1.1rem;
   font-weight: 700;
+}/* Tablet Breakpoint */
+@media (max-width: 1024px) {
+    .dashboard-content {
+        padding: 1.5rem;
+    }
+
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .activity-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .vehicles-grid {
+        grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    }
 }
 
+/* Mobile Breakpoint */
 @media (max-width: 768px) {
-  .dashboard-header-content {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 1rem;
-  }
+    .dashboard-header {
+        padding: 1.5rem 1rem;
+    }
 
-  .dashboard-title {
-    font-size: 2rem;
-  }
+    .dashboard-header-content {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
 
-  .stats-grid {
-    grid-template-columns: 1fr;
-  }
+    .dashboard-title {
+        font-size: 1.75rem;
+    }
 
-  .reservation-card {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 1rem;
-  }
+    .dashboard-subtitle {
+        font-size: 0.95rem;
+    }
 
-  .reservation-status {
-    text-align: left;
-    width: 100%;
-  }
+    .logout-button {
+        width: 100%;
+        text-align: center;
+    }
 
-  .dashboard-tabs {
-    overflow-x: auto;
-  }
+    .dashboard-content {
+        padding: 1rem;
+    }
 
-  .tab {
-    white-space: nowrap;
-    padding: 1rem 1.5rem;
-  }
+    .dashboard-tabs {
+        overflow-x: auto;
+        gap: 0.5rem;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+    }
 
-  .activity-grid {
-    grid-template-columns: 1fr;
-  }
+    .dashboard-tabs::-webkit-scrollbar {
+        display: none;
+    }
 
-  .performance-grid {
-    grid-template-columns: 1fr;
-  }
+    .tab {
+        white-space: nowrap;
+        padding: 0.875rem 1.25rem;
+        font-size: 0.9rem;
+    }
 
-  .fleets-grid {
-    grid-template-columns: 1fr;
-  }
+    .stats-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
 
-  .vehicles-grid {
-    grid-template-columns: 1fr;
-  }
+    .stat-card {
+        padding: 1.5rem;
+    }
 
-  .subscription-banner {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 1rem;
-  }
+    .stat-icon {
+        font-size: 2.5rem;
+    }
+
+    .stat-value {
+        font-size: 1.75rem;
+    }
+
+    .dashboard-section {
+        padding: 1.5rem;
+    }
+
+    .section-title {
+        font-size: 1.5rem;
+    }
+
+    .activity-section {
+        padding: 1.5rem;
+    }
+
+    .reservation-card,
+    .ticket-card {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+        padding: 1.25rem;
+    }
+
+    .reservation-status {
+        text-align: left;
+        width: 100%;
+    }
+
+    .activity-grid {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+    }
+
+    .performance-grid {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+    }
+
+    .performance-card {
+        padding: 1.5rem;
+    }
+
+    .fleets-grid {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+    }
+
+    .fleet-card {
+        padding: 1.5rem;
+    }
+
+    .vehicles-grid {
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        gap: 1rem;
+    }
+
+    .vehicle-card {
+        padding: 1.25rem;
+    }
+
+    .subscription-banner {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+        padding: 1.25rem;
+    }
+
+    .subscription-card {
+        padding: 1.5rem;
+    }
+
+    .subscription-header h3 {
+        font-size: 1.5rem;
+    }
+
+    .ticket-card-full {
+        padding: 1.5rem;
+    }
 }
 
+/* Small Mobile Breakpoint */
+@media (max-width: 480px) {
+    .dashboard-title {
+        font-size: 1.5rem;
+    }
+
+    .stat-card {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .stat-icon {
+        font-size: 2rem;
+    }
+
+    .stat-value {
+        font-size: 1.5rem;
+    }
+
+    .vehicles-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .subscription-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+}

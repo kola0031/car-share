@@ -289,3 +289,95 @@
 .fleet-details-content::-webkit-scrollbar-thumb:hover {
     background: var(--primary-hover);
 }
+
+/* Responsive Breakpoints */
+@media (max-width: 1024px) {
+    .fleet-details-modal {
+        padding: 1rem;
+    }
+
+    .fleet-details-content {
+        max-width: 100%;
+    }
+}
+
+@media (max-width: 768px) {
+    .fleet-details-modal {
+        padding: 0.5rem;
+        align-items: flex-start;
+    }
+
+    .fleet-details-content {
+        padding: 1.5rem;
+        max-height: 95vh;
+        border-radius: var(--radius-md);
+    }
+
+    .fleet-details-header h2 {
+        font-size: 1.25rem;
+    }
+
+    .fleet-metrics-grid {
+        grid-template-columns: repeat(2, 1fr);
+        padding: 1.25rem;
+    }
+
+    .metric-value {
+        font-size: 1.25rem;
+    }
+
+    .fleet-actions {
+        flex-direction: column;
+    }
+
+    .btn-edit,
+    .btn-delete {
+        width: 100%;
+    }
+
+    .vehicle-info {
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+
+    .form-group input,
+    .form-group textarea {
+        font-size: 16px;
+        /* Prevents zoom on iOS */
+    }
+
+    .form-actions {
+        flex-direction: column-reverse;
+    }
+
+    .btn-cancel,
+    .btn-submit,
+    .btn-remove,
+    .btn-add {
+        width: 100%;
+    }
+}
+
+@media (max-width: 480px) {
+    .fleet-details-content {
+        padding: 1rem;
+    }
+
+    .fleet-metrics-grid {
+        grid-template-columns: 1fr;
+        gap: 0.75rem;
+        padding: 1rem;
+    }
+
+    .fleet-details-header h2 {
+        font-size: 1.125rem;
+    }
+
+    .btn-close {
+        font-size: 1.25rem;
+    }
+
+    .vehicle-item {
+        padding: 0.875rem;
+    }
+}

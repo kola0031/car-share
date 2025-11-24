@@ -143,3 +143,53 @@
     border: 1px solid rgba(34, 197, 94, 0.3);
     color: #22c55e;
 }
+
+/* Responsive Breakpoints */
+@media (max-width: 768px) {
+    .fleet-manager {
+        padding: 1.25rem;
+    }
+
+    .fleet-manager-header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 1rem;
+    }
+
+    .fleet-manager-header h3 {
+        font-size: 1.125rem;
+    }
+
+    .btn-create-fleet {
+        width: 100%;
+    }
+
+    .fleet-create-form {
+        padding: 1.25rem;
+    }
+
+    .form-group input,
+    .form-group textarea {
+        font-size: 16px;
+        /* Prevents zoom on iOS */
+    }
+
+    .form-actions {
+        flex-direction: column-reverse;
+    }
+
+    .btn-cancel,
+    .btn-submit {
+        width: 100%;
+    }
+}
+
+@media (max-width: 480px) {
+    .fleet-manager {
+        padding: 1rem;
+    }
+
+    .fleet-create-form {
+        padding: 1rem;
+    }
+}
