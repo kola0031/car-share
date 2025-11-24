@@ -1,187 +1,89 @@
 import express from 'express';
 import { body, validationResult } from 'express-validator';
 import { authenticateToken } from '../middleware/auth.js';
-import {
-  getBookings,
-  getBookingById,
-  getBookingsByDriverId,
-  getBookingsByHostId,
-  getBookingsByVehicleId,
-  createBooking,
-  updateBooking,
-  deleteBooking,
-  getAvailableVehicles,
-} from '../database/bookings.js';
 import { getVehicles } from '../database/vehicles.js';
-import { createTrip } from '../database/trips.js';
+import { getReservations } from '../database/reservations.js';
 
 const router = express.Router();
 
-// Get all bookings (filtered by user role)
-router.get('/', (req, res) => {
+// Get available vehicles for booking (public endpoint)
+router.get('/available', async (req, res) => {
   try {
-    const { driverId, hostId, vehicleId, status } = req.query;
-    let bookings = getBookings();
-    
-    if (driverId) {
-      bookings = bookings.filter(b => b.driverId === driverId);
+    const { startDate, endDate, location } = req.query;
+
+    if (!startDate || !endDate) {
+      return res.status(400).json({ message: 'startDate and endDate are required' });
     }
-    if (hostId) {
-      bookings = bookings.filter(b => b.hostId === hostId);
+
+    // Get all vehicles and reservations
+    const allVehicles = await getVehicles();
+    const allReservations = await getReservations();
+
+    // Find vehicles that are booked during the requested period
+    const bookedVehicleIds = allReservations
+      .filter(r => {
+        const resStart = new Date(r.startDate);
+        const resEnd = new Date(r.endDate);
+        const requestStart = new Date(startDate);
+        const requestEnd = new Date(endDate);
+
+        // Check if reservation overlaps with requested dates
+        return (resStart <= requestEnd && resEnd >= requestStart) &&
+          (r.status === 'confirmed' || r.status === 'active');
+      })
+      .map(r => r.vehicleId);
+
+    // Filter available vehicles
+    let availableVehicles = allVehicles.filter(v =>
+      v.status === 'available' &&
+      !bookedVehicleIds.includes(v._id.toString())
+    );
+
+    // Filter by location if provided
+    if (location) {
+      availableVehicles = availableVehicles.filter(v =>
+        v.location?.toLowerCase().includes(location.toLowerCase()) ||
+        v.parkMyShareLocation?.toLowerCase().includes(location.toLowerCase())
+      );
     }
-    if (vehicleId) {
-      bookings = bookings.filter(b => b.vehicleId === vehicleId);
-    }
-    if (status) {
-      bookings = bookings.filter(b => b.status === status);
-    }
-    
-    res.json(bookings.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)));
+
+    // Format response
+    const formattedVehicles = availableVehicles.map(v => ({
+      id: v._id,
+      make: v.make,
+      model: v.model,
+      year: v.year,
+      dailyRate: v.dailyRate,
+      status: v.status,
+      color: v.color,
+      images: v.images || [],
+    }));
+
+    res.json(formattedVehicles);
+  } catch (error) {
+    console.error('Error fetching available vehicles:', error);
+    res.status(500).json({ message: 'Error searching for vehicles', error: error.message });
+  }
+});
+
+// Get all bookings (for demonstration - should be protected in production)
+router.get('/', async (req, res) => {
+  try {
+    const reservations = await getReservations();
+    res.json(reservations.map(r => ({
+      id: r._id,
+      vehicleId: r.vehicleId,
+      driverId: r.driverId,
+      hostId: r.hostId,
+      startDate: r.startDate,
+      endDate: r.endDate,
+      status: r.status,
+      totalCost: r.totalCost,
+    })));
   } catch (error) {
     console.error('Error fetching bookings:', error);
     res.status(500).json({ message: 'Error fetching bookings' });
   }
 });
 
-// Get available vehicles for booking (public endpoint)
-router.get('/available', (req, res) => {
-  try {
-    const { startDate, endDate, location } = req.query;
-    
-    if (!startDate || !endDate) {
-      return res.status(400).json({ message: 'startDate and endDate are required' });
-    }
-    
-    const bookedVehicleIds = getAvailableVehicles(startDate, endDate);
-    let availableVehicles = getVehicles().filter(v => 
-      v.status === 'available' && 
-      !bookedVehicleIds.includes(v.id) &&
-      v.verificationStatus === 'verified'
-    );
-    
-    if (location) {
-      availableVehicles = availableVehicles.filter(v => 
-        v.parkMyShareLocation?.toLowerCase().includes(location.toLowerCase())
-      );
-    }
-    
-    res.json(availableVehicles);
-  } catch (error) {
-    console.error('Error fetching available vehicles:', error);
-    res.status(500).json({ message: 'Error fetching available vehicles' });
-  }
-});
-
-// Get booking by ID
-router.get('/:id', (req, res) => {
-  try {
-    const booking = getBookingById(req.params.id);
-    if (!booking) {
-      return res.status(404).json({ message: 'Booking not found' });
-    }
-    res.json(booking);
-  } catch (error) {
-    console.error('Error fetching booking:', error);
-    res.status(500).json({ message: 'Error fetching booking' });
-  }
-});
-
-// Create new booking (requires authentication)
-router.post('/', [
-  authenticateToken,
-  body('driverId').notEmpty(),
-  body('vehicleId').notEmpty(),
-  body('pickupDate').notEmpty(),
-  body('returnDate').notEmpty(),
-  body('totalAmount').isNumeric(),
-], (req, res) => {
-  try {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
-    }
-
-    // Check if vehicle is available
-    const bookedVehicleIds = getAvailableVehicles(req.body.pickupDate, req.body.returnDate);
-    if (bookedVehicleIds.includes(req.body.vehicleId)) {
-      return res.status(400).json({ message: 'Vehicle is not available for the selected dates' });
-    }
-
-    const vehicle = getVehicles().find(v => v.id === req.body.vehicleId);
-    if (!vehicle) {
-      return res.status(404).json({ message: 'Vehicle not found' });
-    }
-
-    const booking = createBooking({
-      ...req.body,
-      hostId: vehicle.hostId,
-      dailyRate: vehicle.dailyRate,
-      numberOfDays: Math.ceil(
-        (new Date(req.body.returnDate) - new Date(req.body.pickupDate)) / (1000 * 60 * 60 * 24)
-      ),
-    });
-
-    // Create trip record
-    createTrip({
-      bookingId: booking.id,
-      driverId: booking.driverId,
-      vehicleId: booking.vehicleId,
-      hostId: booking.hostId,
-      status: 'scheduled',
-      pickupLocation: booking.pickupLocation,
-      returnLocation: booking.returnLocation,
-    });
-
-    res.status(201).json(booking);
-  } catch (error) {
-    console.error('Error creating booking:', error);
-    res.status(500).json({ message: 'Error creating booking' });
-  }
-});
-
-// Update booking
-router.put('/:id', (req, res) => {
-  try {
-    const booking = updateBooking(req.params.id, req.body);
-    if (!booking) {
-      return res.status(404).json({ message: 'Booking not found' });
-    }
-    res.json(booking);
-  } catch (error) {
-    console.error('Error updating booking:', error);
-    res.status(500).json({ message: 'Error updating booking' });
-  }
-});
-
-// Cancel booking
-router.post('/:id/cancel', (req, res) => {
-  try {
-    const booking = updateBooking(req.params.id, {
-      status: 'cancelled',
-    });
-    if (!booking) {
-      return res.status(404).json({ message: 'Booking not found' });
-    }
-    res.json(booking);
-  } catch (error) {
-    console.error('Error cancelling booking:', error);
-    res.status(500).json({ message: 'Error cancelling booking' });
-  }
-});
-
-// Delete booking
-router.delete('/:id', (req, res) => {
-  try {
-    const deleted = deleteBooking(req.params.id);
-    if (!deleted) {
-      return res.status(404).json({ message: 'Booking not found' });
-    }
-    res.json({ message: 'Booking deleted successfully' });
-  } catch (error) {
-    console.error('Error deleting booking:', error);
-    res.status(500).json({ message: 'Error deleting booking' });
-  }
-});
-
 export default router;
-

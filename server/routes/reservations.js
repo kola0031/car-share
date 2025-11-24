@@ -2,20 +2,25 @@ import express from 'express';
 import { body, validationResult } from 'express-validator';
 import {
   getReservations,
-  saveReservations,
   createReservation,
   getReservationById,
   updateReservation,
   deleteReservation,
+  getReservationsByDriverId,
+  getReservationsByHostId,
 } from '../database/reservations.js';
 
 const router = express.Router();
 
 // Get all reservations for user
-router.get('/', (req, res) => {
+router.get('/', async (req, res) => {
   try {
-    const reservations = getReservations().filter(r => r.userId === req.user.userId);
-    res.json(reservations);
+    const reservations = await getReservations();
+    // Filter by user - adjust based on role
+    const userReservations = reservations.filter(r =>
+      r.driverId === req.user.driverId || r.hostId === req.user.hostId
+    );
+    res.json(userReservations);
   } catch (error) {
     console.error('Get reservations error:', error);
     res.status(500).json({ message: 'Error fetching reservations' });
@@ -23,13 +28,14 @@ router.get('/', (req, res) => {
 });
 
 // Get single reservation
-router.get('/:id', (req, res) => {
+router.get('/:id', async (req, res) => {
   try {
-    const reservation = getReservationById(req.params.id);
+    const reservation = await getReservationById(req.params.id);
     if (!reservation) {
       return res.status(404).json({ message: 'Reservation not found' });
     }
-    if (reservation.userId !== req.user.userId) {
+    // Check access
+    if (reservation.driverId !== req.user.driverId && reservation.hostId !== req.user.hostId) {
       return res.status(403).json({ message: 'Access denied' });
     }
     res.json(reservation);
@@ -42,25 +48,21 @@ router.get('/:id', (req, res) => {
 // Create reservation
 router.post('/', [
   body('vehicleId').notEmpty(),
-  body('pickupDate').notEmpty(),
-  body('returnDate').notEmpty(),
-  body('customerName').trim().notEmpty(),
-  body('customerEmail').isEmail().normalizeEmail(),
-], (req, res) => {
+  body('startDate').notEmpty(),
+  body('endDate').notEmpty(),
+  body('totalCost').isNumeric(),
+], async (req, res) => {
   try {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() });
     }
 
-    const reservations = getReservations();
-    const newReservation = createReservation({
+    const newReservation = await createReservation({
       ...req.body,
-      userId: req.user.userId,
+      driverId: req.user.driverId,
+      status: 'pending',
     });
-
-    reservations.push(newReservation);
-    saveReservations(reservations);
 
     res.status(201).json(newReservation);
   } catch (error) {
@@ -70,17 +72,17 @@ router.post('/', [
 });
 
 // Update reservation
-router.put('/:id', (req, res) => {
+router.put('/:id', async (req, res) => {
   try {
-    const reservation = getReservationById(req.params.id);
+    const reservation = await getReservationById(req.params.id);
     if (!reservation) {
       return res.status(404).json({ message: 'Reservation not found' });
     }
-    if (reservation.userId !== req.user.userId) {
+    if (reservation.driverId !== req.user.driverId && reservation.hostId !== req.user.hostId) {
       return res.status(403).json({ message: 'Access denied' });
     }
 
-    const updated = updateReservation(req.params.id, req.body);
+    const updated = await updateReservation(req.params.id, req.body);
     res.json(updated);
   } catch (error) {
     console.error('Update reservation error:', error);
@@ -89,17 +91,17 @@ router.put('/:id', (req, res) => {
 });
 
 // Delete reservation
-router.delete('/:id', (req, res) => {
+router.delete('/:id', async (req, res) => {
   try {
-    const reservation = getReservationById(req.params.id);
+    const reservation = await getReservationById(req.params.id);
     if (!reservation) {
       return res.status(404).json({ message: 'Reservation not found' });
     }
-    if (reservation.userId !== req.user.userId) {
+    if (reservation.driverId !== req.user.driverId && reservation.hostId !== req.user.hostId) {
       return res.status(403).json({ message: 'Access denied' });
     }
 
-    deleteReservation(req.params.id);
+    await deleteReservation(req.params.id);
     res.json({ message: 'Reservation deleted successfully' });
   } catch (error) {
     console.error('Delete reservation error:', error);
@@ -108,4 +110,3 @@ router.delete('/:id', (req, res) => {
 });
 
 export default router;
-

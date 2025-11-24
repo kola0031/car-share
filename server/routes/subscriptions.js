@@ -1,17 +1,26 @@
 import express from 'express';
-import { body, validationResult } from 'express-validator';
-import {
-  getSubscriptions,
-  getSubscriptionById,
-  getSubscriptionByHostId,
-  createSubscription,
-  updateSubscription,
-  deleteSubscription,
-  SERVICE_TIERS,
-} from '../database/subscriptions.js';
-import { getHostByUserId } from '../database/hosts.js';
+import { getHostByUserId, getHostById, updateHost } from '../database/hosts.js';
 
 const router = express.Router();
+
+// Service tiers definition
+const SERVICE_TIERS = {
+  basic: {
+    name: 'Basic',
+    price: 299,
+    features: ['Up to 5 vehicles', 'Basic analytics', 'Email support'],
+  },
+  pro: {
+    name: 'Pro',
+    price: 499,
+    features: ['Up to 20 vehicles', 'Advanced analytics', 'Priority support', 'AI pricing'],
+  },
+  enterprise: {
+    name: 'Enterprise',
+    price: 999,
+    features: ['Unlimited vehicles', 'Real-time analytics', '24/7 support', 'White-label'],
+  },
+};
 
 // Get all service tiers
 router.get('/tiers', (req, res) => {
@@ -24,120 +33,63 @@ router.get('/tiers', (req, res) => {
 });
 
 // Get subscription for authenticated host
-router.get('/', (req, res) => {
+router.get('/', async (req, res) => {
   try {
-    // Get host ID from JWT token or look it up by userId
+    // Get host ID from JWT token or query
     let hostId = req.user.hostId || req.query.hostId;
+
     if (!hostId) {
-      const host = getHostByUserId(req.user.userId);
+      const host = await getHostByUserId(req.user.userId);
       if (!host) {
         return res.status(404).json({ message: 'Host not found for this user' });
       }
-      hostId = host.id;
+      hostId = host._id.toString();
     }
-    
-    const subscription = getSubscriptionByHostId(hostId);
-    if (!subscription) {
+
+    const host = await getHostById(hostId);
+    if (!host) {
       return res.status(404).json({ message: 'Subscription not found' });
     }
-    res.json(subscription);
+
+    // Return subscription info from host record
+    res.json({
+      id: host._id,
+      hostId: host._id,
+      serviceTier: host.serviceTier || 'none',
+      status: host.subscriptionStatus || 'pending',
+      monthlyFee: host.monthlySubscriptionFee || 0,
+      stripeSubscriptionId: host.stripeSubscriptionId,
+      features: SERVICE_TIERS[host.serviceTier?.toLowerCase()]?.features || [],
+    });
   } catch (error) {
     console.error('Error fetching subscription:', error);
     res.status(500).json({ message: 'Error fetching subscription' });
-  }
-});
-
-// Get subscription by ID
-router.get('/:id', (req, res) => {
-  try {
-    const subscription = getSubscriptionById(req.params.id);
-    if (!subscription) {
-      return res.status(404).json({ message: 'Subscription not found' });
-    }
-    res.json(subscription);
-  } catch (error) {
-    console.error('Error fetching subscription:', error);
-    res.status(500).json({ message: 'Error fetching subscription' });
-  }
-});
-
-// Create new subscription
-router.post('/', [
-  body('hostId').notEmpty(),
-  body('serviceTier').isIn(['Basic', 'Pro', 'Enterprise']),
-], (req, res) => {
-  try {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
-    }
-
-    // Check if subscription already exists
-    const existing = getSubscriptionByHostId(req.body.hostId);
-    if (existing) {
-      return res.status(400).json({ message: 'Subscription already exists for this host' });
-    }
-
-    const subscription = createSubscription(req.body);
-    res.status(201).json(subscription);
-  } catch (error) {
-    console.error('Error creating subscription:', error);
-    res.status(500).json({ message: 'Error creating subscription' });
   }
 });
 
 // Update subscription (e.g., upgrade/downgrade tier)
-router.put('/:id', [
-  body('serviceTier').optional().isIn(['Basic', 'Pro', 'Enterprise']),
-  body('status').optional().isIn(['active', 'suspended', 'cancelled']),
-], (req, res) => {
+router.put('/:id', async (req, res) => {
   try {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
-    }
+    const { serviceTier, status } = req.body;
 
-    const subscription = updateSubscription(req.params.id, req.body);
-    if (!subscription) {
+    const updates = {};
+    if (serviceTier) updates.serviceTier = serviceTier;
+    if (status) updates.subscriptionStatus = status;
+
+    const host = await updateHost(req.params.id, updates);
+    if (!host) {
       return res.status(404).json({ message: 'Subscription not found' });
     }
-    res.json(subscription);
+
+    res.json({
+      id: host._id,
+      serviceTier: host.serviceTier,
+      status: host.subscriptionStatus,
+    });
   } catch (error) {
     console.error('Error updating subscription:', error);
     res.status(500).json({ message: 'Error updating subscription' });
   }
 });
 
-// Cancel subscription
-router.post('/:id/cancel', (req, res) => {
-  try {
-    const subscription = updateSubscription(req.params.id, {
-      status: 'cancelled',
-      autoRenew: false,
-    });
-    if (!subscription) {
-      return res.status(404).json({ message: 'Subscription not found' });
-    }
-    res.json(subscription);
-  } catch (error) {
-    console.error('Error cancelling subscription:', error);
-    res.status(500).json({ message: 'Error cancelling subscription' });
-  }
-});
-
-// Delete subscription
-router.delete('/:id', (req, res) => {
-  try {
-    const deleted = deleteSubscription(req.params.id);
-    if (!deleted) {
-      return res.status(404).json({ message: 'Subscription not found' });
-    }
-    res.json({ message: 'Subscription deleted successfully' });
-  } catch (error) {
-    console.error('Error deleting subscription:', error);
-    res.status(500).json({ message: 'Error deleting subscription' });
-  }
-});
-
 export default router;
-

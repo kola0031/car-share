@@ -1,108 +1,118 @@
 import express from 'express';
-import { calculateHostPerformance, getRevenueRecordsByHostId } from '../database/revenue.js';
 import { getHostById } from '../database/hosts.js';
-import { getVehicles } from '../database/vehicles.js';
-import { getReservations } from '../database/reservations.js';
-import { calculateRevenueUptime } from '../database/revenue.js';
+import { getVehiclesByHostId } from '../database/vehicles.js';
+import { getReservationsByHostId } from '../database/reservations.js';
 
 const router = express.Router();
 
 // Get performance dashboard for host
-router.get('/dashboard/:hostId', (req, res) => {
+router.get('/dashboard/:hostId', async (req, res) => {
   try {
-    const host = getHostById(req.params.hostId);
+    const host = await getHostById(req.params.hostId);
     if (!host) {
       return res.status(404).json({ message: 'Host not found' });
     }
 
-    const performance = calculateHostPerformance(req.params.hostId);
-    const vehicles = getVehicles().filter(v => v.hostId === req.params.hostId);
-    const reservations = getReservations().filter(r => r.hostId === req.params.hostId);
+    const vehicles = await getVehiclesByHostId(req.params.hostId);
+    const reservations = await getReservationsByHostId(req.params.hostId);
 
-    // Calculate revenue uptime for each vehicle
+    // Calculate basic performance metrics
+    const totalRevenue = reservations
+      .filter(r => r.status === 'completed')
+      .reduce((sum, r) => sum + (r.totalCost || 0), 0);
+
+    const activeReservations = reservations.filter(r =>
+      r.status === 'confirmed' || r.status === 'active'
+    ).length;
+
+    const completedReservations = reservations.filter(r =>
+      r.status === 'completed'
+    ).length;
+
+    // Calculate revenue uptime (percentage of days with bookings in last 30 days)
     const now = new Date();
     const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-    
-    const vehicleUptimes = vehicles.map(vehicle => ({
-      vehicleId: vehicle.id,
-      vehicleName: vehicle.make + ' ' + vehicle.model,
-      revenueUptime: calculateRevenueUptime(
-        vehicle.id,
-        thirtyDaysAgo.toISOString().split('T')[0],
-        now.toISOString().split('T')[0]
-      ),
-    }));
 
-    // Calculate average revenue uptime
-    const averageRevenueUptime = vehicleUptimes.length > 0
-      ? vehicleUptimes.reduce((sum, v) => sum + v.revenueUptime, 0) / vehicleUptimes.length
+    const recentReservations = reservations.filter(r =>
+      new Date(r.createdAt) >= thirtyDaysAgo
+    );
+
+    const revenueUptime = recentReservations.length > 0
+      ? (recentReservations.length / 30 * 100).toFixed(2)
       : 0;
 
     res.json({
       host,
       performance: {
-        ...performance,
-        revenueUptime: averageRevenueUptime,
+        totalRevenue,
+        activeReservations,
+        completedReservations,
+        revenueUptime: parseFloat(revenueUptime),
       },
-      vehicleUptimes,
       totalVehicles: vehicles.length,
       totalReservations: reservations.length,
+      vehicles: vehicles.map(v => ({
+        id: v._id,
+        make: v.make,
+        model: v.model,
+        status: v.status,
+      })),
     });
   } catch (error) {
     console.error('Error fetching performance dashboard:', error);
-    res.status(500).json({ message: 'Error fetching performance dashboard' });
+    res.status(500).json({ message: 'Error fetching performance dashboard', error: error.message });
   }
 });
 
 // Get revenue analytics
-router.get('/revenue/:hostId', (req, res) => {
+router.get('/revenue/:hostId', async (req, res) => {
   try {
     const { startDate, endDate } = req.query;
-    const records = getRevenueRecordsByHostId(req.params.hostId, startDate, endDate);
+    const reservations = await getReservationsByHostId(req.params.hostId);
 
-    const totalRevenue = records.reduce((sum, r) => sum + (r.bookingRevenue || 0), 0);
-    const totalCosts = records.reduce((sum, r) => 
-      sum + (r.maintenanceCost || 0) + (r.cleaningCost || 0) + (r.subscriptionFee || 0), 0
-    );
-    const netRevenue = totalRevenue - totalCosts;
+    // Filter by date range if provided
+    let filteredReservations = reservations;
+    if (startDate && endDate) {
+      filteredReservations = reservations.filter(r => {
+        const resDate = new Date(r.createdAt);
+        return resDate >= new Date(startDate) && resDate <= new Date(endDate);
+      });
+    }
+
+    const totalRevenue = filteredReservations
+      .filter(r => r.status === 'completed')
+      .reduce((sum, r) => sum + (r.totalCost || 0), 0);
 
     // Group by date
     const revenueByDate = {};
-    records.forEach(record => {
-      if (!revenueByDate[record.date]) {
-        revenueByDate[record.date] = {
-          date: record.date,
+    filteredReservations.forEach(reservation => {
+      const date = new Date(reservation.createdAt).toISOString().split('T')[0];
+      if (!revenueByDate[date]) {
+        revenueByDate[date] = {
+          date,
           bookingRevenue: 0,
-          costs: 0,
-          netRevenue: 0,
+          count: 0,
         };
       }
-      revenueByDate[record.date].bookingRevenue += record.bookingRevenue || 0;
-      revenueByDate[record.date].costs += 
-        (record.maintenanceCost || 0) + 
-        (record.cleaningCost || 0) + 
-        (record.subscriptionFee || 0);
-      revenueByDate[record.date].netRevenue = 
-        revenueByDate[record.date].bookingRevenue - revenueByDate[record.date].costs;
+      if (reservation.status === 'completed') {
+        revenueByDate[date].bookingRevenue += reservation.totalCost || 0;
+      }
+      revenueByDate[date].count += 1;
     });
 
     res.json({
       summary: {
         totalRevenue,
-        totalCosts,
-        netRevenue,
-        recordCount: records.length,
+        recordCount: filteredReservations.length,
       },
-      byDate: Object.values(revenueByDate).sort((a, b) => 
+      byDate: Object.values(revenueByDate).sort((a, b) =>
         new Date(a.date) - new Date(b.date)
       ),
-      records,
     });
   } catch (error) {
     console.error('Error fetching revenue analytics:', error);
-    res.status(500).json({ message: 'Error fetching revenue analytics' });
+    res.status(500).json({ message: 'Error fetching revenue analytics', error: error.message });
   }
 });
 
 export default router;
-

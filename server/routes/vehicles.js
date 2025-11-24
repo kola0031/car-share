@@ -2,20 +2,26 @@ import express from 'express';
 import { body, validationResult } from 'express-validator';
 import {
   getVehicles,
-  saveVehicles,
+  getVehiclesByHostId,
   createVehicle,
   getVehicleById,
   updateVehicle,
   deleteVehicle,
+  addVehicleDocument,
+  addVehicleImage,
 } from '../database/vehicles.js';
 import { saveBase64File } from '../services/storage.js';
 
 const router = express.Router();
 
-// Get all vehicles for user
-router.get('/', (req, res) => {
+// Get all vehicles for user/host
+router.get('/', async (req, res) => {
   try {
-    const vehicles = getVehicles().filter(v => v.userId === req.user.userId);
+    const hostId = req.user.hostId;
+    if (!hostId) {
+      return res.status(400).json({ message: 'Host ID not found' });
+    }
+    const vehicles = await getVehiclesByHostId(hostId);
     res.json(vehicles);
   } catch (error) {
     console.error('Get vehicles error:', error);
@@ -24,13 +30,13 @@ router.get('/', (req, res) => {
 });
 
 // Get single vehicle
-router.get('/:id', (req, res) => {
+router.get('/:id', async (req, res) => {
   try {
-    const vehicle = getVehicleById(req.params.id);
+    const vehicle = await getVehicleById(req.params.id);
     if (!vehicle) {
       return res.status(404).json({ message: 'Vehicle not found' });
     }
-    if (vehicle.userId !== req.user.userId) {
+    if (vehicle.hostId !== req.user.hostId) {
       return res.status(403).json({ message: 'Access denied' });
     }
     res.json(vehicle);
@@ -59,22 +65,18 @@ router.post('/', [
     }
     return true;
   }),
-], (req, res) => {
+], async (req, res) => {
   try {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() });
     }
 
-    const vehicles = getVehicles();
-    const newVehicle = createVehicle({
+    const newVehicle = await createVehicle({
       ...req.body,
-      userId: req.user.userId,
+      hostId: req.user.hostId,
       status: req.body.status || 'available',
     });
-
-    vehicles.push(newVehicle);
-    saveVehicles(vehicles);
 
     res.status(201).json(newVehicle);
   } catch (error) {
@@ -84,17 +86,17 @@ router.post('/', [
 });
 
 // Update vehicle
-router.put('/:id', (req, res) => {
+router.put('/:id', async (req, res) => {
   try {
-    const vehicle = getVehicleById(req.params.id);
+    const vehicle = await getVehicleById(req.params.id);
     if (!vehicle) {
       return res.status(404).json({ message: 'Vehicle not found' });
     }
-    if (vehicle.userId !== req.user.userId) {
+    if (vehicle.hostId !== req.user.hostId) {
       return res.status(403).json({ message: 'Access denied' });
     }
 
-    const updated = updateVehicle(req.params.id, req.body);
+    const updated = await updateVehicle(req.params.id, req.body);
     res.json(updated);
   } catch (error) {
     console.error('Update vehicle error:', error);
@@ -103,17 +105,17 @@ router.put('/:id', (req, res) => {
 });
 
 // Delete vehicle
-router.delete('/:id', (req, res) => {
+router.delete('/:id', async (req, res) => {
   try {
-    const vehicle = getVehicleById(req.params.id);
+    const vehicle = await getVehicleById(req.params.id);
     if (!vehicle) {
       return res.status(404).json({ message: 'Vehicle not found' });
     }
-    if (vehicle.userId !== req.user.userId) {
+    if (vehicle.hostId !== req.user.hostId) {
       return res.status(403).json({ message: 'Access denied' });
     }
 
-    deleteVehicle(req.params.id);
+    await deleteVehicle(req.params.id);
     res.json({ message: 'Vehicle deleted successfully' });
   } catch (error) {
     console.error('Delete vehicle error:', error);

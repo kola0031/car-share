@@ -1,14 +1,14 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { 
-  hostsAPI, 
-  fleetsAPI, 
-  subscriptionsAPI, 
-  performanceAPI, 
+import {
+  hostsAPI,
+  fleetsAPI,
+  subscriptionsAPI,
+  performanceAPI,
   ticketsAPI,
   vehiclesAPI,
-  reservationsAPI 
+  reservationsAPI
 } from '../utils/api';
 import ProtectedRoute from '../components/ProtectedRoute';
 import './Dashboard.css';
@@ -82,8 +82,10 @@ const Dashboard = () => {
       setVehicles(vehiclesData);
       setRecentReservations(reservationsData.slice(0, 5)); // Show recent 5 reservations
 
-      // Check onboarding status
-      if (dashboardData?.host?.onboardingStatus !== 'completed') {
+      // Only redirect to onboarding if explicitly pending (not completed or missing)
+      const onboardingStatus = dashboardData?.host?.onboardingStatus;
+      if (onboardingStatus === 'pending' && vehiclesData && vehiclesData.length === 0) {
+        // Only redirect if status is pending AND they have no vehicles
         navigate('/onboarding');
         return;
       }
